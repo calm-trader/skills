@@ -42,6 +42,29 @@ Borrows three of its best rules from
 [`mcarlssen/claude-adversarial-review`](https://github.com/mcarlssen/claude-adversarial-review) (MIT)
 and says exactly which, in [`falsify/ATTRIBUTION.md`](./falsify/ATTRIBUTION.md). MIT.
 
+### [`tradingview-chart-reading`](./tradingview-chart-reading) — read a live chart without being misled
+
+For getting indicator values, OHLC and a study inventory off a saved TradingView layout. Separate
+from the backtesting skill because it loads on a different cue: reading a chart, not writing a
+strategy.
+
+The things that cost time to learn:
+
+- **A blank chart is almost never a broken chart** — it is a hidden-tab bug. Six plausible fixes do
+  not work; making the tab active does. Ships `tv-tab-watchdog.sh`, which must be stopped when you
+  finish because it closes the operator's own chart tabs while it runs.
+- **Read the Data Window, not the legend.** On the account this was established against, the legend
+  renders only the price source even with four studies loaded. And the Data Window is
+  *cursor-anchored*, so its Date header is part of the reading — during market hours the last bar is
+  the **forming** one.
+- **Some studies cannot be read at all.** A box-drawing study has no plotted series and contributes
+  nothing to the Data Window. Reading zero rows for it is the correct result, not a failure.
+- **Two instances of one study are indistinguishable** — neither panel exposes the length. Report
+  them positionally rather than inventing "TEMA(9)". Prefer a multi-plot study, whose plots are
+  named, over N copies of a single one.
+- **Never save, and never touch a broker panel or an account modal** — including on sites you were
+  not sent to.
+
 ### [`tradingview-backtesting`](./tradingview-backtesting) — what actually goes wrong on TradingView
 
 Operational knowledge for backtesting Pine Script strategies and driving TradingView in a browser:

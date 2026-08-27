@@ -84,6 +84,45 @@ created by browser automation is never the active tab, so `document.visibilitySt
 and TradingView never sizes its canvases. Six plausible fixes do not work; making the tab active
 does.
 
+### [`supervision`](./supervision) — a team of advisors, and the protocol that makes them fire
+
+Six supervisor subagents and an independent verifier, plus the operating rules that decide when each
+one is consulted. The agents ship in [`supervision/agents`](./supervision/agents) as assets of the
+skill.
+
+A team of advisors is inert without a protocol. Six well-written supervisors that nobody consults,
+and a verifier whose verdict is advisory, produce exactly the same output as having neither. Every
+rule here was added *after* the failure that made it necessary:
+
+- **`supervisor-product` runs BEFORE the work**, not after three failed attempts, because its job is
+  to stop work that should not start. It has **no tools on purpose** — "if any line needs a fact I
+  did not give you, ask me; that gap is a finding, not a blank to fill" only holds if the gap cannot
+  be quietly closed by reading the repo. It returned *sharpen* on a broker integration and was right:
+  the benefit being claimed was separable from the mechanism being bought, at a tenth of the cost.
+- **At most four checks per verification.** If a task needs more than four, it is two tasks. Six
+  changes in one commit cannot be verified in one pass, by construction.
+- **No verdict counts as FAIL.** A run ending without an explicit `VERDICT:` line has told you
+  nothing, and treating "it didn't complain" as a pass is how a gate becomes a ritual. Re-invoke
+  once; then block the task if it touches a guarded path, because builder self-verification is not
+  independence.
+- **Do not take a supervisor at face value.** They are confident and sometimes wrong. One architect
+  claim about a gameable counter did not reproduce when constructed — and checking it surfaced a
+  *different*, real divergence that accepting the claim would have hidden.
+- **A guardrail test must be seen to fail.** Break the thing it guards, watch it go red, restore.
+  This applies to the verifier itself: a long run of PASS verdicts that never caught anything means
+  it is quieter, not better.
+
+`supervisor-evals` loads [`falsify`](./falsify) and is much weaker without it — install both.
+
+`supervisor-quant` is options dealer-positioning expertise rather than a supervisory stance, and is
+the one agent here that does not travel. In a project that is not about markets, delete it or replace
+its body with your own domain's ground truths; the reusable part is the shape — a domain expert that
+states its conventions and refuses to guess.
+
+The agent files are byte-identical to the ones in the project they came from, and a test there
+enforces it. A genericised copy, edited for publication and never actually run, is precisely the
+failure `falsify` exists to catch.
+
 ## Using them
 
 Copy a skill directory into a project's `.claude/skills/`:
@@ -94,6 +133,17 @@ cp -r skills/falsify /path/to/project/.claude/skills/
 ```
 
 Claude loads a skill when the work matches its frontmatter `description`, or on request by name.
+
+`supervision` also carries subagents, which live in a different directory:
+
+```bash
+cp -r skills/supervision /path/to/project/.claude/skills/
+mkdir -p /path/to/project/.claude/agents
+cp skills/supervision/agents/*.md /path/to/project/.claude/agents/
+```
+
+A project-level `.claude/agents/<name>.md` takes precedence over every other source of that agent, so
+if one of these seems not to apply, look for a local file with the same name first.
 
 ## Writing more
 

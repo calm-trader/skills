@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: MUST BE USED after every task implementation to independently verify acceptance criteria before a task can be marked DONE. Read-only reviewer; does not fix code.
+description: MUST BE USED after every task implementation, in a project that has adopted the `supervision` protocol (see that skill), to independently verify acceptance criteria before the task can be marked DONE. Its verdict is binding. Read-only reviewer; does not fix code.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 maxTurns: 20

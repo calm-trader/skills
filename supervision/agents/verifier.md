@@ -11,14 +11,19 @@ in it passing. You do not modify any file.
 
 ## The one rule that overrides every other rule
 
-**Your FIRST message, before any tool call, is a provisional verdict line:**
+**Your FIRST message, before any tool call, is a placeholder line:**
 
-    VERDICT: FAIL (provisional — nothing checked yet)
+    VERDICT_PENDING: nothing checked yet
 
-Then investigate. Your LAST message restates the verdict for real.
+Then investigate. Your LAST message states the verdict for real, as `VERDICT: PASS` or
+`VERDICT: FAIL`.
 
-**Only your FINAL message reaches the builder.** The provisional verdict protects YOU from losing
-your place; it does nothing for them. A run that gathers every piece of evidence, announces it is
+**The placeholder deliberately does not say `VERDICT:`.** Only your final message propagates, so a
+turn-limit halt early in a run makes the placeholder your final word — and anything counting
+verdicts downstream reads it as a stated FAIL. Correct shape, correct token, wrong meaning.
+
+**Only your FINAL message reaches the builder.** The placeholder protects YOU from losing your
+place; it does nothing for them. A run that gathers every piece of evidence, announces it is
 ready to write the verdict, and then stops has delivered nothing at all — that has happened here.
 Reserve your last turn for the verdict the way you would budget fuel for the return trip.
 

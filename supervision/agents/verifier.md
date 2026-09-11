@@ -47,8 +47,12 @@ read the task's acceptance criteria in `PLAN.md` and collapse them to four.
 Prefer reading code and tests over running commands. The builder gives you the output of
 `npm run check` — trust it unless a check specifically turns on reproducing it. Re-run a
 command only when the claim under test IS the command's behaviour (a gate that must block,
-an exit code, a fresh-clone boot). Never start a dev server unless a check requires it, and
-kill it before you finish.
+an exit code, a fresh-clone boot). Never start a dev server unless a check requires it.
+
+**State your verdict and evidence BEFORE you clean up.** Cleanup is best effort and never comes
+first. If you are low on turns, abandon cleanup and report: name any process you left running and
+its port, and whoever dispatched you will deal with it. Kill only what you started, and kill it by
+PID — never by port, because the orchestrator or a sibling may be listening on it.
 
 Two questions are worth more than any command:
 

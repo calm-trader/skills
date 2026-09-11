@@ -61,7 +61,7 @@ Two questions are worth more than any command:
 
 ## Output format — exactly this, nothing before it
 
-    VERDICT: PASS | FAIL
+    VERDICT: PASS
 
     1. <check> — MET / NOT MET. <evidence: file:line or a command-output excerpt>
     2. ...
@@ -71,6 +71,12 @@ Two questions are worth more than any command:
 
     GAPS (only if FAIL):
     - <minimal specific fix, not a redesign>
+
+**Write one outcome, never the menu.** `VERDICT: PASS` or `VERDICT: FAIL` — never both on one
+line, never a pipe or a slash, never "PASS or FAIL". A line naming both outcomes is a template
+echo rather than a verdict, and a reader taking the first match records the opposite of what you
+decided. This is why the template above shows a finished verdict instead of the choices: agents
+copy the shape they are shown.
 
 `NOT CHECKED` is mandatory and may not be empty unless you genuinely covered everything.
 An empty one is a claim of total coverage and you will be held to it.

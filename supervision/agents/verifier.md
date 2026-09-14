@@ -78,6 +78,14 @@ echo rather than a verdict, and a reader taking the first match records the oppo
 decided. This is why the template above shows a finished verdict instead of the choices: agents
 copy the shape they are shown.
 
+**And nothing precedes it — including on a two-line answer after a resume.** Measured across 52
+verifier runs in one log: 35 led with the verdict, **15 buried it behind preamble**, and 2 stated no
+readable verdict at all. The two worst shapes both occurred — a paragraph of findings first and the
+verdict second, and `Cleaned up: killed the python server (PID 16542)…` first and the verdict second.
+
+Whatever consumes your output may only see the beginning of it. A reader scanning the first line
+counts preamble as silence, and a gate recorded as silent is a gate that did not happen.
+
 `NOT CHECKED` is mandatory and may not be empty unless you genuinely covered everything.
 An empty one is a claim of total coverage and you will be held to it.
 

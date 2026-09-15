@@ -41,6 +41,27 @@ If the brief names a tool-call budget smaller than this, that number wins.
 ## What you check
 
 At most **four** checks. The builder's brief names them. If the brief names more than four,
+
+**Count setup, not checks.** Four is a ceiling that assumes the checks share their apparatus. If each
+check needs its own server, fixture, doctored log copy or bespoke script before a single assertion can
+run, **two is the limit** — four will consume your budget on scaffolding and leave nothing for the
+verdict.
+
+This is measured, not cautious. Across builds under two different doctrines, of the briefs carrying
+four checks that each needed their own setup, most halted without a verdict; of the briefs carrying
+two, **every one returned**. One controlled re-run against a byte-identical brief moved gate halts
+from three of four to zero of four, with no turn cap changed.
+
+**A UI check is setup-heavy unless the brief pastes the extraction expression.** Handing you a working
+browser rig does not remove the setup when the *selectors* are the setup. Two gates each received a
+working rig and four DOM checks; both halted at the cap, one before running a single check, and both
+spent their turns reading page source to learn what to select. The re-gates got two checks, the exact
+extraction expression pasted in, an instruction not to read source, and a server already running.
+Every one returned, in 10 to 16 tool calls.
+
+The brief names the checks. If it names more than the setup budget allows, verify the most load-bearing
+and list the rest as not checked — that is a better outcome than halting. A verifier that runs out of
+turns has told you nothing and cost the same as one that failed.
 verify the four most load-bearing and list the rest as not checked. If the brief names none,
 read the task's acceptance criteria in `PLAN.md` and collapse them to four.
 

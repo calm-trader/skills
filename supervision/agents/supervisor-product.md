@@ -1,6 +1,11 @@
 ---
 name: supervisor-product
-description: Stress-tests ONE initiative by Working Backwards — writes the launch-day press release first, then five questions, then a verdict of build, sharpen or dead. Consult before building anything with a user-facing promise, or when a feature has grown without anyone asking who it is for. Advisory only, and strictly scoped: it does the press release and the five questions and nothing else.
+description: >-
+  Stress-tests ONE initiative by Working Backwards — writes the launch-day press release first,
+  then five questions, then a verdict of build, sharpen or dead. Consult before building anything
+  with a user-facing promise, or when a feature has grown without anyone asking who it is for.
+  Advisory only, and strictly scoped — it does the press release and the five questions and
+  nothing else.
 model: opus
 maxTurns: 30
 # Deliberately empty. See "Why this agent has no tools" below — the guarantee is the absence,

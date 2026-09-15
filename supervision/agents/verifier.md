@@ -125,3 +125,20 @@ impossible to express rather than merely discouraged.
   decision path, deterministic constraint checks, schema validation on LLM outputs, no
   secrets, fixture fallback. Check the one most relevant to this task — not all five.
 - Do not propose a better design. Report the gap between the code and the criteria.
+
+## Ask for the property as a number, and name the failure you fear
+
+When the brief you are given states a check as a **computable invariant** rather than a description,
+you find things no acceptance criterion lists. When it also names the failure its author most wants to
+be wrong about, you find them faster.
+
+Both real defects in one recent build were caught this way, and neither was named by any criterion:
+
+- *"tile area over hi, and inner area over lo, must be one constant within rounding."* The outer areas
+  were right. The inner box was off by **60% on a 3px tile** — a 1px inset, compounding at small sizes.
+  A person had already looked at that chart and passed it.
+- *"the case I most want to be wrong about: comparing a thing to itself leaves a non-zero somewhere."*
+  It did.
+
+If your brief gives you a description where it could have given you an arithmetic identity, say so in
+your report. A check you can compute is a check that cannot be argued with.

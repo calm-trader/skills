@@ -139,11 +139,14 @@ The strongest technique here, and the one most reviews skip because it requires 
 
 **For every test that guards something important:**
 
+0. **Decide where the mutation happens, before you make one.** If the working tree is clean, break
+   the file in place — git is the restore. If it carries uncommitted changes, work on a copy
+   instead: restoring would take that uncommitted work with it, and nothing brings it back.
 1. Break the thing it guards — invert a condition, weaken a check, delete a branch.
 2. Run the test.
 3. **If it still passes, the test is decorative.** Report it as a finding of its own, at the severity
    of the thing it failed to guard.
-4. Restore.
+4. Restore, and confirm with `git diff` that nothing of the mutation remains.
 
 A test written by running the code and pasting the result cannot fail for the reason it exists. The
 signature: assertions on exact output strings; oddly precise floats with no derivation; comments

@@ -15,8 +15,10 @@ file is the protocol for operating as a consult; the skill is how you think.
 ## Output protocol — this is not optional
 
 Two prior dispatches of this agent burned 105k tokens across 48 tool calls and returned a single
-sentence of preamble each time. Root cause: a turn budget spent exploring, with nothing emitted until
-the end, and the end never came. Do not repeat it.
+sentence of preamble each time. Those runs were in the codebase this agent came from, and no record
+of them survives here, so treat the figure as reported rather than something you can check. Root
+cause: a turn budget spent exploring, with nothing emitted until the end, and the end never came. Do
+not repeat it.
 
 - **FINDINGS FIRST.** Your first line is a finding, or `NO FINDINGS` with what you attacked. Never
   open with what you are about to do.
@@ -29,15 +31,19 @@ the end, and the end never came. Do not repeat it.
 
 ## What to attack, in priority order
 
-1. **Tests that pin the bug they exist to catch.** Three have been found in this repo. Signature: an
+The three examples below come from the trading codebase this method was developed against — not this
+repo, and not necessarily the one you are auditing now. `falsify/ATTRIBUTION.md` is the record. They
+are signatures to recognize, not symbols to go looking for.
+
+1. **Tests that pin the bug they exist to catch.** Three were found there. Signature: an
    assertion on the code's observed output rather than a derived property. Confirm by **sabotage** —
    break the guarded thing, run the test, and if it still passes you have a finding at the severity
    of whatever it failed to guard. Restore afterwards.
 2. **Decorative guards.** A check whose failing branch no caller can reach — every caller passes a
-   constant. Found in this repo on the execution path: `assertCanSubmit({ released: true })` made the
+   constant. Found there on an execution path: `assertCanSubmit({ released: true })` made the
    `not_released` branch unreachable while reading as a hard guardrail.
 3. **Unfalsifiable claims.** Any sign, unit, direction or timezone with no convention stated where it
-   is declared. Nothing can be wrong, so nothing can be caught. Found here as an inverted vanna hedge
+   is declared. Nothing can be wrong, so nothing can be caught. Found there as an inverted vanna hedge
    direction that shipped for the life of the file.
 4. **Pipelines that pass their tests and write nothing.** Get the row count. Zero against a green
    suite is usually the biggest finding available. Run `npm run smoke` where it exists.

@@ -209,7 +209,10 @@ wrong result) · what refutation you attempted and why it failed · severity × 
 Then, and only then:
 
 - **All-clears re-attacked** — what you re-checked with a second modality, and how.
-- **Not checked** — say it plainly. An unstated gap reads as a clean bill of health.
+- **Not checked** — say it plainly. An unstated gap reads as a clean bill of health. For each item,
+  say whether it went unchecked because you ran out of budget, or because the instruction could not
+  be followed as written. The second is a finding about the instructions you were given, not a gap
+  in your run.
 - **NO FINDINGS**, if that is the answer, with what you actually attacked. A silent run and a clean
   run must never look the same.
 

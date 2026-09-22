@@ -42,6 +42,15 @@ and a green test suite:
 - **Budget and output discipline** (§0) — findings first, emitted incrementally, and a run that ends
   with no verdict counts as FAIL rather than clean. Added because an adversarial agent in that
   codebase twice burned its whole turn budget exploring and returned only preamble.
+- **"Not checked" names which kind of gap it is** (§7) — budget, or an instruction that could not be
+  followed. Added 2026-09-21 after blind readers audited this skill's own `SKILL.md` and
+  `supervision/agents/supervisor-evals.md`, with `falsify` as the protocol, and caught its internal
+  contradictions about one time in three. Every miss had the same shape: the reader hit the conflict,
+  disobeyed a line to get past it, and filed that under its own "Not checked" as a personal scoping
+  choice rather than a defect in the document. §7 already required the list, so the reader was
+  already writing the answer down; it was not being asked which kind of gap it was. A second run with
+  only this change deployed caught the same two contradictions 6/6 across three fresh readers,
+  against 2/4 in the baseline.
 
 ## Scope difference
 

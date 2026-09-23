@@ -1,6 +1,6 @@
 ---
 name: tradingview-backtesting
-description: Hard-won operational knowledge for backtesting Pine Script strategies on TradingView — cost model, lookahead traps, Deep Backtesting behaviour, data retention, Strategy Tester quirks, browser automation failures, and what TradingView fundamentally cannot backtest. Load BEFORE writing a Pine strategy, before designing a backtest protocol, before dispatching a browser operator to TradingView, or when a backtest result looks surprising. Triggers: Pine Script, TradingView, Strategy Tester, Deep Backtesting, backtest, strategy(), request.security, bar magnifier, walk-forward on TV, "why does my backtest show".
+description: Hard-won operational knowledge for backtesting Pine Script strategies on TradingView — cost model, lookahead traps, Deep Backtesting behaviour, data retention, Strategy Tester quirks, browser automation failures, and what TradingView fundamentally cannot backtest. Load BEFORE writing a Pine strategy, before designing a backtest protocol, before dispatching a browser operator to TradingView, or when a backtest result looks surprising. Triggers: Pine Script, TradingView, Strategy Tester, Deep Backtesting, TradingView backtest, strategy(), request.security, bar magnifier, walk-forward on TV, "why does my TradingView backtest show". Not for backtests run outside TradingView. A browser operator loads references/operator.md instead of this whole file.
 ---
 
 # TradingView backtesting — what actually goes wrong
@@ -9,13 +9,23 @@ Every rule below was paid for with a wasted round, a corrupted result, or a defe
 
 The unifying lesson: **TradingView will nearly always give you a plausible number.** It rarely errors. It silently produces a believable, wrong result — a stale script, a synthetic fill, a blind counter, an uncosted trade. Assume every number is wrong until a specific check says otherwise.
 
+**Read only the part you need.** This file is long, and every agent that loads it pays for all of it on every turn.
+
+| You are | Read | Skip |
+|---|---|---|
+| A browser operator running reads | `references/operator.md` only (it carries the operator rules from §4, §8, §9 and §12, plus the page scripts) | this file |
+| Writing or reviewing Pine | §1–§3, §6, §11 | §8 |
+| Designing a protocol or judging a result | §4, §5, §7, §9, §10 | §8, §11 |
+
 ---
 
 ## 1. Cost model — the most damaging errors, because results stay plausible
 
 **`slippage` is charged per eligible fill — market and stop orders; limit fills are not slipped.** [AUDITED — reasoned from docs and contract math; never measured in a controlled slippage=1-vs-0 run] A market entry stopped out incurs two slipped ticks round-turn; a market entry reaching a limit target generally incurs one. `slippage = 1` turned an intended $9 NQ round-turn into an outcome-dependent ~$14+. A whole round's numbers can be quietly wrong by 50%.
 
-**Preferred pattern: fold friction into a flat commission and set slippage to zero.** [VERIFIED on one-contract, single-entry/single-exit runs]
+**Cost is a per-script fact, not a desk constant.** [VERIFIED — one desk ran three cost models side by side: `cash_per_order 4.5` + `slippage 0`; `cash_per_order 2.0` + `slippage 1`; and `cash_per_order 2.0` on qty-2 scripts, which silently halves the per-contract charge] Read `commission_type`, `commission_value`, `default_qty_value` and `slippage` from each script's declaration, write them into the result record, and confirm the realized round-turn in the List of Trades. Never quote one script's PF under another script's cost header.
+
+**One clean pattern for new scripts: fold friction into a flat commission and set slippage to zero.** [VERIFIED on one-contract, single-entry/single-exit runs]
 ```pine
 strategy(..., slippage = 0,
          commission_type = strategy.commission.cash_per_order,
@@ -71,7 +81,7 @@ The fix: submit `strategy.exit(..., profit = ticks, loss = ticks)` **in the same
 - **★ THE "FROZEN TESTER" IS MOSTLY NOT FROZEN — THE REPORT DOES NOT AUTO-REFRESH AFTER AN INPUTS-DIALOG EDIT.** [VERIFIED — R68, reproduced and then reversed] Change an input, and the Strategy Tester **keeps displaying the previous configuration's numbers until "Update report" is clicked.** In R68 a diagnostic read returned byte-identical figures to the prior stage; clicking Update Report changed it from 77 trades to the true 34. Toggling back and re-clicking reproduced the original exactly, so both readings were real — the panel was stale, not stuck.
   **This is the mechanism behind the long-standing "identical results across different inputs" folklore, which sat in this document as an unexplained [REPORTED] heuristic for several rounds.** It is not flaky recalculation and it is not a reason to restart Chrome.
   **Rule: after every input change, click "Update report" and re-open the Inputs dialog to confirm the live value, before reading any number.** An input edit that silently reports the previous cell's result is indistinguishable from a real finding — and in a parameter ladder it produces a perfectly plausible, entirely false plateau.
-- **Bar detalization** (Bar Magnifier) sits in Properties: `Default (4 ticks/bar)` vs `High (~40 ticks/bar)`, plus `use_bar_magnifier = true`. On one 5m engine (NQ1!, 2024–25) high detalization returned **byte-identical** results including timestamps [VERIFIED] — a useful "is this a fill-resolution artifact?" control *for that engine and window*, not a general theorem. **A byte-identical detalization read is also the frozen-tester symptom above: before crediting the null, prove the tester is live (change any input, observe a different result).** Restore the batch's pre-registered setting afterwards — an unrecorded setting change breaks comparability.
+- **Bar detalization** (Bar Magnifier) sits in Properties: `Default (4 ticks/bar)` vs `High (~40 ticks/bar)`, plus `use_bar_magnifier = true`. On one 5m engine (NQ1!, 2024–25) high detalization returned **byte-identical** results including timestamps [VERIFIED] — a useful "is this a fill-resolution artifact?" control *for that engine and window*, not a general theorem. **A byte-identical detalization read can also be the stale report above:** click Update report before crediting the null. Restore the batch's pre-registered setting afterwards — an unrecorded setting change breaks comparability.
 
 ---
 
@@ -159,6 +169,7 @@ For a session, run the maintained watchdog `.claude/skills/tradingview-backtesti
 ## 9. Batch discipline
 
 - **≤6 reads per operator dispatch** (desk workflow convention, not a platform limit — longer sessions correlate with identical-result episodes and operator drift).
+- **Operator token discipline.** Measured on one desk: ~66k tokens and ~45 browser tool calls per read, of which metric extraction was under 1%. Every tool call re-sends the context, so cost scales with call count. Never read the `.pine` file into the operator's context (copy it with `pbcopy < file`, check `wc -l` and `head -1`); read the page as DOM text in one script call per check group (`scripts/tvkit.js`: `__tvkit.state()`, `__tvkit.report()`), and check each record with `scripts/validate_result.py`; screenshots only when the DOM cannot answer. See `references/operator.md`.
 - **Save each result to disk immediately after taking it**, never at batch end — platform limits and browser failures cost nothing if completed reads are already persisted.
 - Pre-state, per read: symbol, timeframe, session (RTH vs extended), date range, every input that differs, and the expected trade count if known.
 - **Trade count is the cheapest integrity check — in an engine built for it.** Where entries are independent of exits (day-slot consumed at entry, no re-entry — the design used for exit surfaces here [VERIFIED at 118/123 per cell]), a stop/target grid must return an **identical** trade count in every cell; a difference means exits are feeding back into entries and the surface is invalid. **If the strategy can re-enter, or an open position blocks later signals, the invariant does not hold** — build the slot discipline first, or compare entry-event IDs instead of counts.
@@ -171,6 +182,10 @@ For a session, run the maintained watchdog `.claude/skills/tradingview-backtesti
 **Win% as a measurement instrument.** With TP at one barrier and SL at the other, the Strategy Tester's **win% *is* the first-touch probability** — a clean way to measure "which side breaks first" claims. Caveat: with no stop and an end-of-day exit, win% becomes an **upper bound** on the touch rate (non-touching days that close profitably score as wins).
 
 **Serve multiple experimental windows from ONE backtest range.** TradingView takes a single contiguous range, so put the window calendar *inside the engine* as a `blockRole ∈ {all, select, validate}` input that gates entries by date. One deep-backtest range then serves selection and validation. **Verify the gate**: `select` count ~half of `all`, and `select` a strict subset *by trade dates/IDs*, not just count. [VERIFIED at exactly 0.500 on one engine] Simulate the role formula over the actual eligible session calendar first — a calendar-day formula left some month-role cells empty.
+
+**Record raw metrics in the order comment, then sweep thresholds offline.** [VERIFIED — one filter study went from an expected 20–30 reads to 2] Write the raw continuous value of every candidate filter metric into each entry's `comment` (`S r=0.770 x=1.24 w=0.140`), built at the signal bar's confirmed close before any fill exists. One baseline read then gives the full threshold sweep for every filter from the exported List of Trades. Raw values, not boolean flags: a flag forces a re-run per threshold. The single point of failure is the export: sight one complete `Signal` cell in the CSV, confirm negative values keep an ASCII hyphen, and parse with a regex (`x=(-?\d+\.\d+)`), never by splitting on `=`.
+
+**One read, many windows: split the exported trades offline.** [AUDITED — valid only under the conditions below; confirm once per engine] For an intraday engine that is flat every night and carries no state across the window boundary (no daily loss cap carried over, no warm-up that the later window depends on), run ONE Deep read over the whole span, export the List of Trades, and compute each window (halves, holdout, per year) with `scripts/split_trades.py`. This replaces one read per window. Confirm equivalence once per engine by comparing the offline split of one window with a direct read of it (trade count exact, PF within rounding). Engines with a daily cap, a warm-up dependency, or cross-day positions keep direct reads or the `blockRole` gate above.
 
 **A matched placebo is stronger than a clock control.** Keep the strategy's own signal dates and sides, shift only the entry time (e.g. +90 min). Then the null holds date, side and frequency constant and varies only *when* the trade is taken. **Check the placebo's trade count matches the real run** — if a shifted entry can fall past a session cutoff, the day is silently *dropped* rather than delayed, and the control is no longer clean (observed: 2–2.5% count shortfall).
 
@@ -195,9 +210,7 @@ All [VERIFIED] observed failures except where tagged. A clean compile does not c
   **Always write `math.floor(hm / 100) * 60 + hm % 100`.** Two independent auditors disagreed on this and it was settled by a one-read probe, not by argument — when reviewers contradict each other on platform semantics, **measure it; it is almost always cheaper than the debate.**
   **Why it matters more than it looks:** an `int` declaration whose right-hand side contains `/` will still compile (the float is accepted/truncated at assignment), so **the type annotation is not a guard**. In `IB-ENGINE-v1…v5` this silently made a "09:30–10:30" Initial Balance actually **09:48–10:48**, the 14:30 cutoff **14:48**, and `flatAt=1555` → **988 min = 16:28**, past the 16:00 close, so the clock-based flatten could never fire. **All of R33's results ran on that mis-specified window**; a code comment reading `// 0930 -> 570` sat beside the defect for three rounds. **Treat any `int x = ... / ...` as suspect, and assert one clock value on-chart before trusting a session-based engine.**
 
----
-
-**`input.time(defval = timestamp(...))` does NOT compile in v6 — CE10123, and dropping the timezone argument does NOT fix it.** [VERIFIED twice — R68, 5 blocking errors both times, on `strategies/aw/AW-ENGINE-v5.pine` lines 15-19] `input.time` requires a **`const int`** `defval`. **Every** form of `timestamp()` types as `simple int`, including the all-literal timezone-less form `timestamp(2024, 2, 1, 0, 0)` — the widely-copied `input.time(timestamp("01 Jan 2021"))` idiom from v5-era scripts is **not** valid here. Do not spend a second operator dispatch re-testing a `timestamp()` variant; the first CE10123 refutes the whole family.
+**`input.time(defval = timestamp(...))` does NOT compile in v6 — CE10123, and dropping the timezone argument does NOT fix it.** [VERIFIED twice — R68, 5 blocking errors both times, on a date-window input block] `input.time` requires a **`const int`** `defval`. **Every** form of `timestamp()` types as `simple int`, including the all-literal timezone-less form `timestamp(2024, 2, 1, 0, 0)` — the widely-copied `input.time(timestamp("01 Jan 2021"))` idiom from v5-era scripts is **not** valid here. Do not spend a second operator dispatch re-testing a `timestamp()` variant; the first CE10123 refutes the whole family.
 **Two fixes that work:** a literal epoch-millisecond constant (Pine time is ms, not seconds — and note the value must encode the exchange-timezone wall clock you intend), or — preferred, because it is readable and carries no timezone or unit ambiguity — **drop `input.time` entirely and gate on a `YYYYMMDD` integer**: `int t0 = input.int(20240201, "T0 (YYYYMMDD)")`, compared against `year(time, tz) * 10000 + month(time, tz) * 100 + dayofmonth(time, tz)`. That form is const-free, makes the timezone explicit at every call, and uses only multiplication and addition, so it does not reintroduce the `int/int` float hazard.
 **Method note:** this was fixed once on confident reasoning about the type system, shipped, and failed identically on the next dispatch — costing a full operator round-trip. Pine's type qualifiers are not reliably derivable by inspection. Per §11's `int/int` precedent: **probe the type in a throwaway `indicator()` before committing a fix to a 800-line engine**, or choose a construct that avoids the qualifier question altogether.
 
@@ -210,13 +223,13 @@ All [VERIFIED] observed failures except where tagged. A clean compile does not c
 
 ## 12. Pre-flight checklist
 
-0. **The script COMPILES.** Build → compile → review → read; a reviewed script is not a running script (§11). Zero blocking errors, and treat CW10002 `ta.*`-in-a-short-circuit warnings as correctness findings, not lint.
-1. Watchdog running (`tv-tab-watchdog.sh`) **and alive** (check its last log line against now — a stalled watchdog looks exactly like a dead layout); chart tab active (`document.hidden === false`).
-2. Script pasted via clipboard; **line count and header verified**; Strategy Tester header shows the expected name; exactly one strategy instance.
-3. Symbol verified (ticker + price sanity); timeframe; session (extended hours on/off) as intended — **re-verify session and date range after every reload/recompile** (both silently reset).
-4. Deep Backtesting on (DEEP badge); date range set; bar detalization at the pre-registered setting.
-5. **Realized round-turn cost confirmed in the List of Trades** before trusting the batch. Also confirm a declared property (commission, initial capital) in **Strategy Properties** — that, not the tab name, is proof the `strategy()` declaration took effect at all.
-5b. **After EVERY input change: click "Update report" and re-open the Inputs dialog to confirm the live value** before reading a number. The panel does not auto-refresh, and a stale read is indistinguishable from a finding.
-6. First/last closed-trade dates recorded on every read (truncation canary); warm-up handled by an early range start + T0 entry gate.
-7. Diagnostic counters window-scoped — or read only on a non-Deep recent window where loaded bars == the range. **If Deep Backtesting cannot be disabled (§8), counters are unavailable entirely: build the funnel out of TRADES instead — one diagnostic arm per stage, each taking a trade when its stage is reached.**
-8. Trade count sane against expectation; identical across exit-only cells **only if** the engine's entries are exit-independent.
+1. **The script COMPILES.** Build → compile → review → read; a reviewed script is not a running script (§11). Zero blocking errors, and treat CW10002 `ta.*`-in-a-short-circuit warnings as correctness findings, not lint.
+2. Watchdog running (`tv-tab-watchdog.sh`) **and alive** (check its last log line against now — a stalled watchdog looks exactly like a dead layout); chart tab active (`document.hidden === false`).
+3. Script pasted via clipboard; **line count and header verified**; Strategy Tester header shows the expected name; exactly one strategy instance.
+4. Symbol verified (ticker + price sanity); timeframe; session (extended hours on/off) as intended — **re-verify session and date range after every reload/recompile** (both silently reset).
+5. Deep Backtesting on (DEEP badge); date range set; bar detalization at the pre-registered setting.
+6. **Realized round-turn cost confirmed in the List of Trades** before trusting the batch, and the script's own cost settings written into the result (§1). Also confirm a declared property (commission, initial capital) in **Strategy Properties** — that, not the tab name, is proof the `strategy()` declaration took effect at all.
+7. **After every input change, click "Update report" and confirm the live value in the Inputs dialog** before reading a number (§4).
+8. First/last closed-trade dates recorded on every read (truncation canary); warm-up handled by an early range start + T0 entry gate.
+9. Diagnostic counters window-scoped — or read only on a non-Deep recent window where loaded bars == the range. **If Deep Backtesting cannot be disabled (§8), counters are unavailable entirely: build the funnel out of TRADES instead — one diagnostic arm per stage, each taking a trade when its stage is reached.**
+10. Trade count sane against expectation; identical across exit-only cells **only if** the engine's entries are exit-independent.

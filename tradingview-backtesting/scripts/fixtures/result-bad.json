@@ -1,0 +1,31 @@
+{
+  "script": "strategies/example-v1.pine",
+  "symbol": "NQ1!",
+  "timeframe": "3",
+  "session": "RTH",
+  "detalization": "Default",
+  "deep_backtesting": true,
+  "tester_date_range": "2024-01-01 to 2025-06-30",
+  "actual_first_trade_entry": "2024-01-03 09:36",
+  "actual_last_trade_entry": "2025-06-27 10:06",
+  "net_profit_usd": 10000.0,
+  "gross_profit_usd": 20000.0,
+  "gross_loss_usd": 10000.0,
+  "profit_factor": 2.2,
+  "max_drawdown_usd": 3000.0,
+  "closed_trades": 40,
+  "win_rate_pct": 45.0,
+  "winners": 19,
+  "losers": 22,
+  "breakevens": 0,
+  "commission_type": "cash_per_order",
+  "commission_value": 2.0,
+  "qty": 1,
+  "trades_exiting_on_later_date": 3,
+  "open_position_at_range_end": false,
+  "inputs": {
+    "minPts": 50
+  },
+  "report_updated_after_input_change": false,
+  "compile_error": null
+}

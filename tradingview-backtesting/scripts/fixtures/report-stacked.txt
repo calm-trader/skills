@@ -1,0 +1,59 @@
+NQ1!
+EXAMPLE STRATEGY v1
+Jan 1, 2024 — Jun 30, 2025
+DEEP
+RTH
+Default detalization
+
+Key stats
+
+Total PnL
++10,000.00USD+1.00%
+Max drawdown
+3,000.00USD0.30%
+Profitable trades
+45.00%18/40
+Profit factor
+2.000
+
+Performance analysis
+
+Gross profit
+20,000.00USD2.00%
+Gross loss
+10,000.00USD1.00%
+Profit factor
+2.000
+Commission load
+0.50%
+Profits and losses
+All signals
++10,000.00
+USD
+S
++6,000.00
+USD
+L
++4,000.00
+USD
+
+Trades analysis
+
+Expectancy
+250.00USD0.03%
+Largest profit
+4,000.00USD
+Largest loss
+500.00USD
+Trades distribution
+40
+Total trades
+Winners
+18 trades
+45.00%
+Losers
+22 trades
+55.00%
+Breakevens
+0 trades
+0.00%

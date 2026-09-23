@@ -1,0 +1,35 @@
+Oct 1, 2023 — Mar 31, 2025
+DEEP
+ETH
+High detalization
+Total PnL
+−2,500.00USD−0.25%
+Max drawdown
+7,250.50USD0.72%
+Profitable trades
+60.00%30/50
+Profit factor
+0.900
+Gross profit
+22,500.00USD2.25%
+Gross loss
+25,000.00USD2.50%
+Commission load
+1.00%
+All signals
+−2,500.00 USD
+L
++1,000.00 USD
+S
+−3,500.00 USD
+Expectancy
+−50.00USD−0.01%
+Largest profit
+3,000.00USD
+Largest loss
+1,200.00USD
+50
+Total trades
+Winners  30 trades  60.00%
+Losers  20 trades  40.00%
+Breakevens  0 trades  0.00%

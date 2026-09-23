@@ -84,6 +84,11 @@ created by browser automation is never the active tab, so `document.visibilitySt
 and TradingView never sizes its canvases. Six plausible fixes do not work; making the tab active
 does.
 
+Also ships a small token-efficiency kit for the browser operator: `references/operator.md` (the
+runbook an operator loads instead of the whole skill), `scripts/tvkit.js` (one-call page-state and
+Strategy Tester report checks), `scripts/split_trades.py` (split one exported trade list into windows
+offline), `scripts/validate_result.py` (arithmetic checks on a result record) and `scripts/selftest.sh`.
+
 ### [`supervision`](./supervision) — a team of advisors, and the protocol that makes them fire
 
 Six supervisor subagents and an independent verifier, plus the operating rules that decide when each

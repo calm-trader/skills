@@ -51,6 +51,18 @@ and a green test suite:
   already writing the answer down; it was not being asked which kind of gap it was. A second run with
   only this change deployed caught the same two contradictions 6/6 across three fresh readers,
   against 2/4 in the baseline.
+- **Measurement claims** (§1 row 7, §3e), **source fidelity** (§1 row 8), **kills as findings**
+  (§3 "Underpowered"), **cited artefacts** (§5) and the **parsable last line** (§7). Added
+  2026-09-23 from the skill's first whole-repository run on a trading-research repo. Where the
+  claim was code-shaped the text produced the finding: the largest one (a headline figure carried
+  by a leg that could only close at a profit, behind a decorative end-of-day guard) was row 3 plus
+  §5, and a self-test that still passed after its engine was sabotaged was §4 verbatim. Every
+  finding about a *number* was improvised by the operator instead: a benchmark of zero where the
+  honest one was the trivial alternative, "out-of-sample" windows inside the selection window, a
+  validation window that had already decided eight rounds, cost billed at half the stated rate,
+  family size counted as catalogue size. Days later a second round found a cited leaderboard that
+  had never existed, and a cut made on 14 observations had been filed as a falsification. The
+  rows are written generically; the trading instance lives in `tradingview-backtesting`.
 
 ## Scope difference
 

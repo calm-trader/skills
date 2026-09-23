@@ -3,8 +3,9 @@ name: falsify
 description: >-
   Adversarial audit that attacks every claim a codebase makes until it breaks or survives — not only
   the code, but the tests that supposedly guard it, the guards that supposedly fire, the conventions
-  that supposedly define correctness, and the claim that any of it ever ran. Fans out specialist
-  reviewers, refutes both the findings AND the all-clears using a different search modality, then
+  that supposedly define correctness, the measurements that supposedly prove it, and the claim that
+  any of it ever ran. Fans out specialist reviewers, refutes both the findings AND the all-clears
+  using a different search modality, then
   demands empirical proof: a guard is not a guard until it has been seen to fail. Invoke with
   /falsify, or when asked to "attack this", "adversarial review", "audit before commit", "what is
   wrong with this", or when a review keeps coming back clean and you do not believe it.
@@ -22,9 +23,10 @@ and those are the expensive ones. Every defect below passed code review, passed 
 | A hedge-direction sign inverted since the file was written | no convention said which sign meant what, so the sentence could not be wrong |
 | A capture pipeline dead for ten days behind a healthy-looking page | every function was correct; nothing called them with real data |
 | A module with complete unit tests and zero production rows | 100% of its tests passed |
+| A headline figure "validated" on a window that had already been used to make decisions | every number was transcribed correctly |
 
 None of these is a coding error. Each is a **claim that could not be falsified** — and a review that
-only reads the diff will confirm all five.
+only reads the diff will confirm all six.
 
 **The discipline: treat every claim as a hypothesis and try to kill it.** A claim that survives a
 genuine attack is worth something. A claim nobody attacked is worth nothing, however green the suite.
@@ -60,8 +62,11 @@ Before attacking, name what is being claimed. Most reviews only attack the first
 | 4 | **This value means X** | no stated convention, so no reading is wrong | §3d unfalsifiable claims |
 | 5 | **This runs** | correct code, never called with real input | §5 empirical reachability |
 | 6 | **This succeeded** | reports success while storing, sending, or changing nothing | compare the report against the side effect |
+| 7 | **This measurement means what it says** | the number is real, but the unit, window, cost, benchmark or sample it rests on is not the one claimed | §3e measurement claims |
+| 8 | **This implements the source** | correct code for a spec that mistranscribed the source: wrong period, wrong side, a clock in the wrong unit | recompute one parameter from the source by hand; read one computed value at runtime |
 
-Rows 2–6 are where the durable defects live, because rows 2–6 are what nobody checks.
+Rows 2–8 are where the durable defects live, because rows 2–8 are what nobody checks. Row 7 is the
+one a code review cannot reach at all: the code that produced the number can be flawless.
 
 ---
 
@@ -83,7 +88,7 @@ severity 1–5. Candidates are not findings yet.
    compatibility. Find callers by *path strings and reflective dispatch*, not symbol grep alone.
 6. **Complexity** — dead code, reinvented stdlib, single-implementation abstractions. Reported
    separately; never blocks on its own.
-7. **Falsifiability** *(this skill's addition)* — for every claim of kinds 2–6 above, can it be
+7. **Falsifiability** *(this skill's addition)* — for every claim of kinds 2–8 above, can it be
    wrong? If nothing could distinguish this code from a broken version of itself, that is the finding.
 
 ---
@@ -97,6 +102,9 @@ A finding survives only if a skeptic **cannot** refute it. Attack each candidate
 - **Does it reproduce** — or does it rest on a misreading? Construct the failing input. If you cannot,
   say so and drop confidence.
 - **Pre-existing** — unchanged on the base branch is out of scope *unless* this change widens exposure.
+- **Underpowered** — a kill, a cut, or a "no effect" is a finding too, and gets the same attack as a
+  win: how many observations, on what window, in what unit. A negative that cannot be told apart from
+  a null read is **UNMEASURED**, not falsified; report it as such, with the read that would measure it.
 - **Not a valid refutation:** "it matches existing code." If the precedent shares the gap, both are
   exposed.
 
@@ -108,6 +116,10 @@ elsewhere" is itself a claim, and it is the claim nobody attacks.
 **Re-attack it with a different search modality than the one that produced it.** Symbol grep said no
 callers? Search path strings, string-keyed dispatch, config, DI registration, generated code, and the
 network surface. An all-clear survives only if the second modality also fails to break it.
+
+For a **measured** claim, a second modality is data the claim has never been scored on, a matched
+sham that keeps everything but the mechanism, or a split by regime or era. Re-reading the same data
+with the same method is the same modality and refutes nothing.
 
 ### 3b. Panel size
 
@@ -130,6 +142,34 @@ simultaneously, because none of them can say what correct would look like.
 
 Fix order matters: **state the convention first, then correct the code.** Correcting first leaves the
 next reader with the same undecidable question.
+
+---
+
+### 3e. Measurement claims
+
+A number is a claim about the process that produced it. The code can be correct and the number can
+still mean nothing. For every headline figure, a benchmark, a rate, a score, a result:
+
+- **Unit.** State what one observation is, and whether the figure includes everything it should
+  (open items at the end of the window, failures that were filtered, cost as actually billed).
+  Take the unit from the raw records, not from the header that summarises them.
+- **Window.** Has this window already decided anything, in any earlier round? If yes it is
+  in-sample, whatever it was called when it was chosen. Only a window with no prior read counts as
+  held out.
+- **Power.** State the number of observations and the interval it implies. A negative on a sample
+  too small to distinguish from noise is UNMEASURED (§3). A positive on one is *underpowered*, and
+  says so in the finding.
+- **Benchmark.** Score against the trivial alternative (do nothing, random, the prior version), not
+  against zero. A figure that beats zero and not the trivial alternative is the trivial alternative.
+- **Concentration.** Share of the result carried by the top few observations or the best single
+  period. If most of it lives there, the finding is about those, not about the method.
+- **Trials.** How many variants were tried before this one was reported, counted as effectively
+  independent trials, not as catalogue entries. The best of many is expected to look good.
+- **Stability of the read.** Was the figure taken while its inputs were still changing (a live
+  edge, a backfilling feed, an unsettled batch)? Re-read once on settled data before it stands.
+
+Domain skills carry the concrete instance of this list for their own numbers and point back here;
+this section stays generic on purpose.
 
 ---
 
@@ -184,6 +224,12 @@ Score by *operational* reachability, not just structural:
 - **inert infrastructure** — correct, complete, and called by nothing yet. Score at would-be-reachable
   weight and label it, so the risk is tracked rather than discovered later.
 
+**Cited artefacts** are rows too. For every file, table, log or result a document cites: confirm it
+exists, open it, and confirm the headline figure is in it. A citation to a file that does not
+exist, or two "different" result files that are byte-identical, is a finding at the severity of
+the decision that rests on it. Numbers that exist get checked; numbers that were never produced
+get cited, and nobody checks a citation.
+
 **Silent success** is the paired check: does anything report success while its side effect did not
 happen? Compare the report to the artefact — the row, the file, the message. Prefer designs where the
 artefact settles the claim and the report cannot.
@@ -218,5 +264,15 @@ Then, and only then:
   in your run.
 - **NO FINDINGS**, if that is the answer, with what you actually attacked. A silent run and a clean
   run must never look the same.
+
+The report's last line, with nothing after it, is exactly:
+
+```
+FALSIFY: <n> BLOCK · <n> CONSIDER · <n> NOTE · attacked: <claim kinds> · not checked: <n> (budget <n>, instruction <n>)
+```
+
+A run without this line has not finished, and whatever consumes the report scores it FAIL. The
+sibling `supervision` skill learned this the hard way: a verdict that a parser cannot find is a
+gate that did not happen.
 
 Never edit, stage, or commit. This skill diagnoses; the operator decides.

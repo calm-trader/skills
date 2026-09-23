@@ -200,3 +200,59 @@ All [VERIFIED] observed failures except where tagged. A clean compile does not c
 6. First/last closed-trade dates recorded on every read (truncation canary); warm-up handled by an early range start + T0 entry gate.
 7. Diagnostic counters window-scoped — or read only on a non-Deep recent window where loaded bars == the range.
 8. Trade count sane against expectation; identical across exit-only cells **only if** the engine's entries are exit-independent.
+
+---
+
+## 13. Verifying a backtest's claims — the `falsify` §3e instance
+
+`falsify` (sibling skill) attacks claims generically; this is what its §3e list means for a Strategy
+Tester number. Load both. Each line carries the failure that produced it.
+
+- **Unit.** State whether "trades" are entries or legs (a two-exit bracket reports two legs per entry;
+  one strategy's "196 closed trades" were ~98 entries scored against a ≥30-trade gate) [VERIFIED];
+  whether **open P&L at range end** is in the figure (a "PF 2.56 crown jewel" excluded −$55k of open
+  position that its own JSON notes carried) [VERIFIED]; and the cost **as billed in the List of
+  Trades**, not the header (`cash_per_order` at `default_qty_value=2` bills half the stated per-contract
+  rate) [VERIFIED].
+- **Window.** A window that has adjudicated any decision in any round is in-sample from then on. Two
+  "OOS halves" inside the screen window, and a "validation" window read in eight rounds before its
+  forward read, both passed as out-of-sample [VERIFIED]. Only a sealed window with no prior read counts.
+- **Power.** `SE(log PF) ≈ √(4.5/n)` (§7). A kill on n < ~30 entries is UNMEASURED, not falsified: a
+  strategy cut on 14 legs in its second half, read on the live edge (§5) where 1m-derived data is
+  unstable, was filed as "OOS did its job" [VERIFIED]. A win on n < ~60 is underpowered and says so.
+- **Benchmark.** Long-biased systems are scored against a **hold-matched random-entry control** with
+  the same hold-length distribution and costs, not against zero; one of three "3-for-3" daily
+  strategies was not significant against drift [VERIFIED]. A turnover-matched sham (§10) is the
+  intraday equivalent.
+- **Concentration.** Top-5 winners as a share of net, and net by exit year. One strategy's 2026-H1
+  (n = 8) carried 40% of a 15-year net and was headlined "strongest 2024–26" [VERIFIED].
+- **Trials.** Count variants as effective family size (pairwise correlation of trade P&L), not as
+  catalogue size; gate variants at ρ 0.76–0.89 were once treated as independent arms [VERIFIED].
+- **Stability of the read.** Re-read once on a range ending ≥ 5 weeks back (§5) before a kill or a
+  promotion stands.
+- **Source fidelity** (falsify §1 row 8). Before any arm is read, recompute one parameter from the
+  source by hand and read one computed value on-chart. A daily 20-EMA where the source said 15-minute
+  bars voided a whole round; an `int/int` clock ran every round of a family on the wrong window
+  through two "no lookahead, PASS" audits [VERIFIED]. Argued semantics are not verified semantics.
+- **Cited artefacts** (falsify §5). Every result file a docket cites must exist and carry the number;
+  a cited leaderboard that was never written, and a batch that never ran, survived a whole-repo audit
+  because the audit checked numbers that existed [VERIFIED].
+
+### Multi-lane indicators
+
+An indicator that carries N verified engines makes N + 2 claims, attacked separately:
+
+- **Lane identity.** On one window the lane's signal count equals the source strategy's entry count,
+  and a sample of five signal bars matches five entry bars. Byte-diff the lane logic against the
+  strategy; a "port" is a new claim until this passes. An indicator whose verification checked the HUD
+  and side labels only shipped four holdout-refuted engines on by default [VERIFIED].
+- **Realtime agreement.** Log the lane's signals on live bars for N sessions, reload, diff against the
+  historical plot. Any divergence is a repaint finding, BLOCK for a lane that fires alerts;
+  `lookahead_off` without a `[1]` offset (§2) is the known shape.
+- **Default state.** A lane is on by default only with a clean out-of-window read on file; a lane that
+  failed its holdout ships off and labelled with the failing number.
+- **Confluence.** "Two lanes agreeing is better" is its own claim: it needs a window with no prior read
+  and the single lanes' base rate on the same days.
+- **Independence.** For every pair of lanes, entry-date overlap and P&L correlation on the same window.
+  Families deduped in words ("run one of these four") with no correlation number are a claim, not a
+  dedupe. Two lanes above ~0.6 are one bet, sized as one.

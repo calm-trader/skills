@@ -33,6 +33,9 @@ What it does differently:
   test is decorative and is reported at the severity of whatever it failed to guard.
 - **Asks whether a row appeared.** Static reachability answers "could this run"; the expensive
   question is "has it ever run".
+- **Asks whether a measurement means what it says.** The code can be correct and the number can
+  still rest on the wrong unit, a window that already decided something, a sample too small to
+  say anything, or a benchmark of zero. A kill on such a number is *unmeasured*, not falsified.
 - **Findings first, emitted incrementally**, and a run ending with no verdict counts as FAIL rather
   than clean — because a silent run and a clean run must never look the same.
 

@@ -45,6 +45,10 @@ most common failure of this kind of agent.
   finding beats breadth across five unconfirmed ones.
 - **A run that ends with no verdict counts as FAIL, not as "clean."** Say `NO FINDINGS` and what you
   actually checked, so the gap is visible. Silence and cleanliness must never look the same.
+- **If you cannot dispatch agents, run the lenses (§2) and the skeptics (§3b) yourself, in order,**
+  and say in the report that the panel was one reader. A reader without an Agent tool otherwise
+  improvises past "run these in parallel" and "run three skeptics", and the report does not say
+  so. This wording comes from a 2026-09-21 audit of this file and has not been tested yet.
 
 ---
 
@@ -97,6 +101,8 @@ A finding survives only if a skeptic **cannot** refute it. Attack each candidate
 - **Does it reproduce** — or does it rest on a misreading? Construct the failing input. If you cannot,
   say so and drop confidence.
 - **Pre-existing** — unchanged on the base branch is out of scope *unless* this change widens exposure.
+- **Underpowered** — the finding itself rests on too few observations to stand: one failing input,
+  one run, one window. Say how many it took and cap confidence accordingly.
 - **Not a valid refutation:** "it matches existing code." If the precedent shares the gap, both are
   exposed.
 
@@ -218,5 +224,17 @@ Then, and only then:
   in your run.
 - **NO FINDINGS**, if that is the answer, with what you actually attacked. A silent run and a clean
   run must never look the same.
+
+The report's last line, with nothing after it, is exactly:
+
+```
+FALSIFY: <n> BLOCK · <n> CONSIDER · <n> NOTE · <n> UNMEASURED · attacked: <claim kinds> · not checked: <n> (budget <n>, instruction <n>)
+```
+
+UNMEASURED counts the claims you attacked and could not score either way, so they are not lost in
+a bucket that means something else. Treat a report without this line as FAIL:
+it has not finished. Nothing in this repository parses the line yet; the rule is an instruction to
+the reader, and the sibling `supervision` skill's history says why it matters: a verdict that a
+reader cannot find is a gate that did not happen.
 
 Never edit, stage, or commit. This skill diagnoses; the operator decides.

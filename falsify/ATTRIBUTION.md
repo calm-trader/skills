@@ -51,6 +51,21 @@ and a green test suite:
   already writing the answer down; it was not being asked which kind of gap it was. A second run with
   only this change deployed caught the same two contradictions 6/6 across three fresh readers,
   against 2/4 in the baseline.
+- **A one-reader fallback (§0), "Underpowered" as a refutation of the audit's own finding (§3), and
+  a parsable last line with an UNMEASURED slot (§7).** Added 2026-09-24 in the same change that
+  proposed, and then withdrew, two measurement claim rows. The proposal came from the skill's first
+  whole-repository run on a trading-research repo (2026-09-01/02), where every finding about a
+  *number* (a benchmark of zero, windows already used to decide, cost billed at half the stated
+  rate) had been improvised by the operator while the code-shaped findings came from the text. The
+  rows were tested before merge with the blind-reader setup from 2026-09-21: six planted measurement
+  defects in a small synthetic target, readers with and without the rows. **Null**: 3.83 vs 4.00 of
+  6 (Haiku, 6 per arm, p = 0.71), 4.50 vs 4.75 (Sonnet, 4 per arm). The rows came out, per the rule
+  written into this file before the test ran. Limits of that test: small sample, small legible
+  target; it rules out a large effect on evidence a reader opens anyway, not a modest one, and not
+  the buried-history case that motivated the rows. Write-up:
+  https://github.com/calm-trader/claude-plugins/tree/main/docs/measurements/falsify-measurement-rows.
+  The three additions that stayed change what a report looks like, not what a reader finds, and
+  were not what the test measured. The trading-specific checks live in `tradingview-backtesting`.
 
 ## Scope difference
 

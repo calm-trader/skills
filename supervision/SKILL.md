@@ -50,7 +50,7 @@ below are about this one.
 | `supervisor-product` | anything with a user-facing promise | **BEFORE building** |
 | `supervisor-architect` | design, structure, dependency, API shape, "this approach feels wrong" | after 3 failed attempts |
 | `supervisor-design` | UI: visual language, hierarchy, motion, any redesign | before a restyle, or after 3 |
-| `supervisor-evals` (loads `falsify`) | a claim you suspect is untrue; tests that pin bugs; guards that never fire; **any measured claim** (a metric, a benchmark, a result) before it is marked done — the verifier's four checks do not cover falsify §3e | **before a measured claim is accepted**; otherwise any time, it is cheap |
+| `supervisor-evals` (loads `falsify`) | a claim you suspect is untrue; tests that pin bugs; guards that never fire; **a measured claim a decision rests on** (a headline figure, a kill, a promotion) — the verifier's four checks do not cover falsify §3e | **before such a claim is accepted**; otherwise any time |
 | `supervisor-quant` | domain math and sign conventions *(replace with your domain)* | after 3 failed attempts |
 | `verifier` | every task, before it can be marked done | **always** |
 

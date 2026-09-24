@@ -102,9 +102,9 @@ A finding survives only if a skeptic **cannot** refute it. Attack each candidate
 - **Does it reproduce** — or does it rest on a misreading? Construct the failing input. If you cannot,
   say so and drop confidence.
 - **Pre-existing** — unchanged on the base branch is out of scope *unless* this change widens exposure.
-- **Underpowered** — a kill, a cut, or a "no effect" is a finding too, and gets the same attack as a
-  win: how many observations, on what window, in what unit. A negative that cannot be told apart from
-  a null read is **UNMEASURED**, not falsified; report it as such, with the read that would measure it.
+- **Underpowered** — the finding itself rests on too few observations to stand: one failing input,
+  one run, one window. Say how many it took and cap confidence accordingly. (A kill or a cut made
+  *by the target* on too few observations is the target's claim, row 7, attacked under §3e "Power".)
 - **Not a valid refutation:** "it matches existing code." If the precedent shares the gap, both are
   exposed.
 
@@ -157,8 +157,8 @@ still mean nothing. For every headline figure, a benchmark, a rate, a score, a r
   in-sample, whatever it was called when it was chosen. Only a window with no prior read counts as
   held out.
 - **Power.** State the number of observations and the interval it implies. A negative on a sample
-  too small to distinguish from noise is UNMEASURED (§3). A positive on one is *underpowered*, and
-  says so in the finding.
+  too small to distinguish from noise is **UNMEASURED**, not falsified: report it as such, with the
+  read that would measure it. A positive on one is *underpowered*, and says so in the finding.
 - **Benchmark.** Score against the trivial alternative (do nothing, random, the prior version), not
   against zero. A figure that beats zero and not the trivial alternative is the trivial alternative.
 - **Concentration.** Share of the result carried by the top few observations or the best single
@@ -268,11 +268,13 @@ Then, and only then:
 The report's last line, with nothing after it, is exactly:
 
 ```
-FALSIFY: <n> BLOCK · <n> CONSIDER · <n> NOTE · attacked: <claim kinds> · not checked: <n> (budget <n>, instruction <n>)
+FALSIFY: <n> BLOCK · <n> CONSIDER · <n> NOTE · <n> UNMEASURED · attacked: <claim kinds> · not checked: <n> (budget <n>, instruction <n>)
 ```
 
-A run without this line has not finished, and whatever consumes the report scores it FAIL. The
-sibling `supervision` skill learned this the hard way: a verdict that a parser cannot find is a
-gate that did not happen.
+UNMEASURED counts the claims in the target that could not be scored either way (§3e "Power"), so
+they are not lost in a bucket that means something else. Treat a report without this line as FAIL:
+it has not finished. Nothing in this repository parses the line yet; the rule is an instruction to
+the reader, and the sibling `supervision` skill's history says why it matters: a verdict that a
+reader cannot find is a gate that did not happen.
 
 Never edit, stage, or commit. This skill diagnoses; the operator decides.

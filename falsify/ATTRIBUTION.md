@@ -62,7 +62,11 @@ and a green test suite:
   validation window that had already decided eight rounds, cost billed at half the stated rate,
   family size counted as catalogue size. Days later a second round found a cited leaderboard that
   had never existed, and a cut made on 14 observations had been filed as a falsification. The
-  rows are written generically; the trading instance lives in `tradingview-backtesting`.
+  rows are written generically; the trading instance lives in `tradingview-backtesting`. **Evidence
+  status: one run, unmeasured.** That run shows the gap; it does not yet show that rows 7–8 and §3e
+  close it, which is the claim they make. The test is the blind-reader setup from the 2026-09-21
+  change: seed a measurement defect in a target and compare readers with and without these rows.
+  Until that has run, treat the rows as a hypothesis with the failure that produced it.
 
 ## Scope difference
 

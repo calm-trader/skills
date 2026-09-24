@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Self-test for the helper scripts against synthetic fixtures. Needs node and python3.
-# Every check here must also be seen to FAIL once (falsify §5): the bad fixtures below do that.
+# Every check here must also be seen to FAIL once (falsify §4): the bad fixtures below do that.
 set -u
 cd "$(dirname "$0")"
 fail=0

@@ -1,3 +1,7 @@
 # macOS Finder metadata. Created on any directory a Mac user browses, and
 # already present untracked in this checkout.
 .DS_Store
+
+# Python bytecode from the falsify self-tests and fixture target.
+__pycache__/
+*.pyc

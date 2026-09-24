@@ -48,7 +48,12 @@ most common failure of this kind of agent.
 - **If you cannot dispatch agents, run the lenses (§2) and the skeptics (§3b) yourself, in order,**
   and say in the report that the panel was one reader. A reader without an Agent tool otherwise
   improvises past "run these in parallel" and "run three skeptics", and the report does not say
-  so. This wording comes from a 2026-09-21 audit of this file and has not been tested yet.
+  so. `[untested]`
+- **When you run as a sub-agent, only your final message reaches the caller.** So make every
+  message cumulative: every finding confirmed so far, in full, then a last line
+  `FALSIFY_PARTIAL: <n> findings so far · next: <what you are attacking>`. A run halted at its turn
+  limit then hands the caller everything it found instead of the sentence it was in the middle of.
+  `FALSIFY:` goes on the finished report only (§7), never on a partial one. `[untested]`
 
 ---
 
@@ -232,9 +237,11 @@ FALSIFY: <n> BLOCK · <n> CONSIDER · <n> NOTE · <n> UNMEASURED · attacked: <c
 ```
 
 UNMEASURED counts the claims you attacked and could not score either way, so they are not lost in
-a bucket that means something else. Treat a report without this line as FAIL:
-it has not finished. Nothing in this repository parses the line yet; the rule is an instruction to
-the reader, and the sibling `supervision` skill's history says why it matters: a verdict that a
-reader cannot find is a gate that did not happen.
+a bucket that means something else. Treat a report without this line as FAIL: it has not finished.
+`scripts/check_report.py` reads the line and checks it against the body (counts, the §6 thresholds,
+the budget/instruction split); the sibling `supervision` skill's history says why it matters: a
+verdict that a reader cannot find is a gate that did not happen. If you score a finding outside the
+§6 thresholds on purpose, write `override:` and the reason on the same line, so the checker can tell
+a decision from a slip.
 
 Never edit, stage, or commit. This skill diagnoses; the operator decides.

@@ -47,6 +47,10 @@ most common failure of this kind of agent.
   finding beats breadth across five unconfirmed ones.
 - **A run that ends with no verdict counts as FAIL, not as "clean."** Say `NO FINDINGS` and what you
   actually checked, so the gap is visible. Silence and cleanliness must never look the same.
+- **If you cannot dispatch agents, run the lenses (§2) and the skeptics (§3b) yourself, in order,**
+  and say in the report that the panel was one reader. A reader without an Agent tool otherwise
+  improvises past "run these in parallel" and "run three skeptics", and the report does not say
+  so. This wording comes from a 2026-09-21 audit of this file and has not been tested yet.
 
 ---
 

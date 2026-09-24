@@ -236,10 +236,10 @@ All [VERIFIED] observed failures except where tagged. A clean compile does not c
 
 ---
 
-## 13. Verifying a backtest's claims — the `falsify` §3e instance
+## 13. Verifying a backtest's claims
 
-`falsify` (sibling skill) attacks claims generically; this is what its §3e list means for a Strategy
-Tester number. Load both. Each line carries the failure that produced it.
+`falsify` (sibling skill) attacks a codebase's claims; these are the claims a Strategy Tester number
+makes that its taxonomy does not name. Load both. Each line carries the failure that produced it.
 
 - **Unit.** State whether "trades" are entries or legs (a two-exit bracket reports two legs per entry;
   one strategy's "196 closed trades" were ~98 entries scored against a ≥30-trade gate) [VERIFIED];
@@ -263,11 +263,11 @@ Tester number. Load both. Each line carries the failure that produced it.
   catalogue size; gate variants at ρ 0.76–0.89 were once treated as independent arms [VERIFIED].
 - **Stability of the read.** Re-read once on a range ending ≥ 5 weeks back (§5) before a kill or a
   promotion stands.
-- **Source fidelity** (falsify §1 row 8). Before any arm is read, recompute one parameter from the
+- **Source fidelity.** Before any arm is read, recompute one parameter from the
   source by hand and read one computed value on-chart. A daily 20-EMA where the source said 15-minute
   bars voided a whole round; an `int/int` clock ran every round of a family on the wrong window
   through two "no lookahead, PASS" audits [VERIFIED]. Argued semantics are not verified semantics.
-- **Cited artefacts** (falsify §5). Every result file a docket cites must exist and carry the number;
+- **Cited artefacts** (falsify §5, "did a row appear", applied to citations). Every result file a docket cites must exist and carry the number;
   a cited leaderboard that was never written, and a batch that never ran, survived a whole-repo audit
   because the audit checked numbers that existed [VERIFIED].
 

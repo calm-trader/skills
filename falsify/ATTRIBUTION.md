@@ -41,31 +41,33 @@ and a green test suite:
   pipeline ran dead for ten days behind a page that looked healthy.
 - **Budget and output discipline** (§0) — findings first, emitted incrementally, and a run that ends
   with no verdict counts as FAIL rather than clean. Added because an adversarial agent in that
-  codebase twice burned its whole turn budget exploring and returned only preamble.
+  codebase twice burned its whole turn budget exploring and returned only preamble. `[reported]`
 - **"Not checked" names which kind of gap it is** (§7) — budget, or an instruction that could not be
-  followed. Added 2026-09-21 after blind readers audited this skill's own `SKILL.md` and
-  `supervision/agents/supervisor-evals.md`, with `falsify` as the protocol, and caught its internal
-  contradictions about one time in three. Every miss had the same shape: the reader hit the conflict,
-  disobeyed a line to get past it, and filed that under its own "Not checked" as a personal scoping
-  choice rather than a defect in the document. §7 already required the list, so the reader was
-  already writing the answer down; it was not being asked which kind of gap it was. A second run with
-  only this change deployed caught the same two contradictions 6/6 across three fresh readers,
-  against 2/4 in the baseline.
-- **A one-reader fallback (§0), "Underpowered" as a refutation of the audit's own finding (§3), and
-  a parsable last line with an UNMEASURED slot (§7).** Added 2026-09-24 in the same change that
-  proposed, and then withdrew, two measurement claim rows. The proposal came from the skill's first
-  whole-repository run on a trading-research repo (2026-09-01/02), where every finding about a
-  *number* (a benchmark of zero, windows already used to decide, cost billed at half the stated
-  rate) had been improvised by the operator while the code-shaped findings came from the text. The
-  rows were tested before merge with the blind-reader setup from 2026-09-21: six planted measurement
-  defects in a small synthetic target, readers with and without the rows. **Null**: 3.83 vs 4.00 of
-  6 (Haiku, 6 per arm, p = 0.71), 4.50 vs 4.75 (Sonnet, 4 per arm). The rows came out, per the rule
-  written into this file before the test ran. Limits of that test: small sample, small legible
-  target; it rules out a large effect on evidence a reader opens anyway, not a modest one, and not
-  the buried-history case that motivated the rows. Write-up:
-  https://github.com/calm-trader/claude-plugins/tree/main/docs/measurements/falsify-measurement-rows.
-  The three additions that stayed change what a report looks like, not what a reader finds, and
-  were not what the test measured. The trading-specific checks live in `tradingview-backtesting`.
+  followed. Added 2026-09-21. `[measured: 2/4 → 6/6]`, see `MEASUREMENTS.md`.
+- **A one-reader fallback** (§0) — run the lenses and skeptics yourself when you cannot dispatch
+  agents, and say so. Added 2026-09-24 from a reader audit of this file. `[untested]`
+- **"Underpowered" as a refutation** (§3) of the audit's own finding. Added 2026-09-24. `[untested]`
+- **A parsable last line with an UNMEASURED slot** (§7), read by `scripts/check_report.py`. Added
+  2026-09-24. `[untested]` for its effect on readers; the checker itself has a self-test.
+- **Cumulative messages ending `FALSIFY_PARTIAL:`** (§0) when running as a sub-agent, because only a
+  sub-agent's final message reaches its caller. Added 2026-09-24 from the sibling `supervision`
+  skill's record of turn-limit halts. `[untested]`
+- **Two measurement claim rows and a §3e**, proposed 2026-09-24 and withdrawn the same day after a
+  null blind-reader test. `[measured: null]`, see `MEASUREMENTS.md`. The trading-specific checks
+  that motivated them live in `tradingview-backtesting` §13.
+
+### Tags
+
+Each addition above carries one tag, so a reader can tell evidence from belief about this skill's
+own rules:
+
+- `[measured: …]` — a blind-reader comparison with and without the rule was run; the number and the
+  write-up are in `MEASUREMENTS.md`.
+- `[reported]` — the failure that motivated the rule was observed; the rule's effect was not measured.
+- `[untested]` — neither. The same tag appears next to the rule inside `SKILL.md`.
+
+`check-falsify.sh` at the repository root reports which of these additions a copied `SKILL.md`
+carries, so an installed copy that has drifted behind this one is visible.
 
 ## Scope difference
 

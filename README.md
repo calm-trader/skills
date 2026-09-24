@@ -38,6 +38,15 @@ What it does differently:
 
 Read-only. It never edits, stages, or commits.
 
+Ships with its own checks, because a skill about unfalsifiable claims should not make them about
+itself: `scripts/check_report.py` reads a report's `FALSIFY:` last line and reports every way it
+disagrees with the body (a missing verdict, an echoed template, a label that contradicts its own
+severity × confidence); `fixtures/` is a small target with one planted defect per claim kind and a
+committed answer key, so a change to `SKILL.md` is measured rather than argued; `MEASUREMENTS.md`
+is the record of what was measured, and `ATTRIBUTION.md` tags every rule `[measured]`, `[reported]`
+or `[untested]`. `check-falsify.sh` at the repository root reports which merged changes an installed
+copy is missing, and whether the files around it cite the right sections.
+
 Borrows three of its best rules from
 [`mcarlssen/claude-adversarial-review`](https://github.com/mcarlssen/claude-adversarial-review) (MIT)
 and says exactly which, in [`falsify/ATTRIBUTION.md`](./falsify/ATTRIBUTION.md). MIT.

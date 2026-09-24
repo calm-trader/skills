@@ -1,0 +1,51 @@
+{
+  "target": "target/",
+  "note": "Keep this file out of the sandbox the reader sees (make-sandbox.sh copies target/ only). A defect counts as found when one paragraph of the report names one of its files and one of its keywords; a decoy counts as a false positive under the same rule.",
+  "defects": {
+    "D1": {
+      "row": 3,
+      "what": "check_released is decorative: its only caller, orders.submit, defaults released=True and nothing passes anything else; submit is reached only through string dispatch (dispatch.HANDLERS), so a symbol grep for callers finds none",
+      "files": ["orders.py", "guards.py", "dispatch.py"],
+      "keywords": ["released", "check_released", "decorative", "cannot fire", "never fire", "unreachable", "constant"]
+    },
+    "D2": {
+      "row": 2,
+      "what": "hedge_qty returns vanna * dsigma; its own docstring says hedge = -vanna * dsigma; tests/test_hedge.py asserts the observed (inverted) output, so it pins the bug",
+      "files": ["hedge.py", "test_hedge.py"],
+      "keywords": ["sign", "invert", "pins", "pin the", "-vanna", "−vanna", "vanna"]
+    },
+    "D3": {
+      "row": 5,
+      "what": "the capture pipeline has written zero rows: select() keeps venue == 'CME' and the feed says 'XCME', so run_capture appends nothing; data/fills.csv is header-only after ten days of 'capture ok' in logs/capture.log, and status() reports healthy from the log line alone (silent success)",
+      "files": ["capture.py", "fills.csv", "status.py", "capture.log"],
+      "keywords": ["zero rows", "no rows", "header only", "header-only", "XCME", "empty", "0 rows", "never written", "nothing written", "silent success", "healthy"]
+    },
+    "D4": {
+      "row": 4,
+      "what": "positions.signed_qty says side is +1 or -1 and never says which is long; adapter.SIDE maps B to -1 as 'exchange convention'; no reading of net_exposure can be wrong",
+      "files": ["positions.py", "adapter.py"],
+      "keywords": ["convention", "which is long", "unstated", "+1", "-1", "sign"]
+    },
+    "C1": {
+      "row": 1,
+      "control": true,
+      "what": "report.last_n is off by one (rows[-(n-1):]); an ordinary review catches it, so it measures the reader's floor, not the skill",
+      "files": ["report.py"],
+      "keywords": ["last_n", "off-by-one", "off by one", "n - 1", "n-1"]
+    }
+  },
+  "decoys": {
+    "X1": {
+      "what": "guards.check_qty is a real guard: dispatch payloads reach it with arbitrary values and test_guards shows it failing on five inputs; calling it decorative is a false positive",
+      "files": ["guards.py"],
+      "keywords": ["check_qty"],
+      "unless": ["reachable", "fires", "real guard", "not decorative", "all-clear", "re-attacked"]
+    },
+    "X2": {
+      "what": "hedge.delta_hedge is correct and its test encodes the mechanism (hedge + delta == 0); flagging it is a false positive",
+      "files": ["hedge.py"],
+      "keywords": ["delta_hedge"],
+      "unless": ["correct", "fine", "mechanism", "all-clear", "survives", "not a finding", "re-attacked"]
+    }
+  }
+}

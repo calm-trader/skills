@@ -199,6 +199,9 @@ Score by *operational* reachability, not just structural:
 happen? Compare the report to the artefact — the row, the file, the message. Prefer designs where the
 artefact settles the claim and the report cannot.
 
+A cited file is a claim too: `scripts/check_citations.py DIR` checks that every path a document
+cites resolves to a real file, and that any number attributed to it occurs there.
+
 ---
 
 ## 6. Score

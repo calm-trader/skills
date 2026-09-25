@@ -1,10 +1,14 @@
 # skills
 
+[![checks](https://github.com/calm-trader/skills/actions/workflows/checks.yml/badge.svg)](https://github.com/calm-trader/skills/actions/workflows/checks.yml)
+
 Custom [Claude Code](https://claude.com/claude-code) skills. Each directory is one skill: a
 `SKILL.md` whose frontmatter tells Claude when to load it, plus any assets that skill needs.
 
 Everything here was written from things that actually went wrong. The rules carry the failure that
 produced them, because a rule without its reason gets optimised away by the next person who reads it.
+
+To use one, copy its directory into your project's `.claude/skills/`; see [Using them](#using-them).
 
 ## The skills
 
@@ -158,6 +162,17 @@ cp skills/supervision/agents/*.md /path/to/project/.claude/agents/
 
 A project-level `.claude/agents/<name>.md` takes precedence over every other source of that agent, so
 if one of these seems not to apply, look for a local file with the same name first.
+
+## Checking them
+
+`falsify`, `supervision` and `tradingview-backtesting` ship self-checks. Run them all with:
+
+```bash
+./check-all.sh
+```
+
+It needs bash, python3 and node, changes nothing, and runs in seconds. CI runs the same script on
+every push and pull request.
 
 ## Writing more
 

@@ -30,6 +30,10 @@ want="count-mismatch mislabel"
 # Shapes readers write: score on the line under its heading, a label word in passing, "3x3", a table.
 python3 check_report.py fixtures/report-shapes.md >/dev/null && ok "check_report reads a heading's score from the next line and ignores a label in passing and 3x3" || bad "check_report shapes: $(names fixtures/report-shapes.md)"
 
+# Grouping must not let an aside's score stand in for the finding's own: two scores, no decision.
+got=$(names fixtures/report-two-scores.md)
+[ "$got" = "two-scores" ] && ok "check_report flags a finding with two different scores instead of picking one" || bad "check_report two-scores: got '$got'"
+
 # The fixture target's own suite is green; that is the point of the fixture.
 ( cd ../fixtures/target && python3 -m unittest discover -q -s tests -t . 2>&1 | tail -1 | grep -q '^OK' ) \
   && ok "fixture target: its test suite passes with every planted defect in place" || bad "fixture target suite"

@@ -27,6 +27,8 @@ Findings it can raise (name — meaning):
   straddles           a severity or confidence range crosses a §6 threshold, so the bucket is
                       undecided
   unscored            a labelled finding carries no severity × confidence
+  two-scores          one finding carries two different severity × confidence pairs, so which one
+                      the label answers to is undecided
   count-mismatch      the line's count for a bucket differs from the body, recomputed from
                       severity × confidence (label counts are reported alongside)
   nothing-scored      the line claims findings but no line in the body carries severity × confidence
@@ -57,21 +59,35 @@ def bucket(risk):
     return "NOTE"
 
 
-def parse_score(text):
-    """Return (sev_lo, sev_hi, conf_lo, conf_hi) or None. Severity is the 1–5 number, confidence 0–1.
-
-    Only a pair whose confidence is at most 1 counts, so "a 3x3 grid" or "2 × 4 contracts" in a
-    finding's prose is not read as a score."""
+def parse_scores(text):
+    """Every distinct (sev_lo, sev_hi, conf_lo, conf_hi) in the text, in order. Severity is the 1–5
+    number, confidence 0–1. Only a pair whose confidence is at most 1 counts, so "a 3x3 grid" or
+    "2 × 4 contracts" in a finding's prose is not read as a score."""
+    found = []
     for m in SXC_RE.finditer(text):
         s1, s2, c1, c2 = (float(x) if x else None for x in m.groups())
         s2, c2 = s2 or s1, c2 or c1
         if 0 < s1 <= 5 and 0 < s2 <= 5 and c1 <= 1 and c2 <= 1:
-            return (s1, s2, c1, c2)
+            found.append((m.start(), (s1, s2, c1, c2)))
     for m in SEVCONF_RE.finditer(text):
         s, c = float(m.group(1)), float(m.group(2))
         if 0 < s <= 5 and c <= 1:
-            return (s, s, c, c)
-    return None
+            found.append((m.start(), (s, s, c, c)))
+    out = []
+    for _, sc in sorted(found):
+        if sc not in out:
+            out.append(sc)
+    # A score inside another one's range ("4–5 × 0.9", then "severity 4 confidence 0.9 at the low
+    # end") restates it; only scores that disagree count as two.
+    def inside(a, b):
+        return b[0] <= a[0] and a[1] <= b[1] and b[2] <= a[2] and a[3] <= b[3]
+    return [a for a in out if not any(b != a and inside(a, b) for b in out)]
+
+
+def parse_score(text):
+    """The first score in the text, or None."""
+    scores = parse_scores(text)
+    return scores[0] if scores else None
 
 
 # A finding starts at a heading, bullet, numbered item, table row, bold lead or F<n> id.
@@ -151,9 +167,14 @@ def check(text):
         if head.lstrip().startswith("FALSIFY"):
             continue
         lm = LEAD_RE.match(head) or INLINE_RE.search(head)
-        score = parse_score(block)
+        scores = parse_scores(block)
+        score = scores[0] if scores else None
         if not lm and not score:
             continue
+        if len(scores) > 1:
+            # A finding with two different scores has no one bucket, and picking one would let an
+            # aside's number stand in for the finding's own. Score the finding once.
+            findings.append(("two-scores", f"line {i + 1}: {len(scores)} different severity × confidence pairs in one finding; score the finding once"))
         override = "override:" in block.lower()
         label = lm.group(1) if lm else None
         if lm and lm.group(3):

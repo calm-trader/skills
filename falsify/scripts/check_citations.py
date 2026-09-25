@@ -56,7 +56,8 @@ TOKEN_RE = re.compile(
 # debt: numbers are scoped to "the rest of the line", not to the nearest citation, so a second
 # citation's number on the same line can produce a false match or a false miss. Bare integers are
 # excluded entirely (too noisy: line counts, dates, list sizes). An attributed count like
-# "37 trades" is invisible to this check. Upgrade: pair each number to its nearest token by
+# "37 trades" is invisible to this check. Live case in this repo: tradingview-backtesting/SKILL.md
+# pairs an early "under 1%" with two scripts cited later in the same bullet. Upgrade: pair each number to its nearest token by
 # distance, and widen the pattern behind a small verb whitelist ("shows", "reports", "at").
 NUM_RE = re.compile(r"-?\d+\.\d+%?|-?\d+%")
 

@@ -59,4 +59,21 @@ clean_rc=$?
 rm -rf "$tmp"
 [ "$clean_rc" -eq 0 ] && ok "check_citations exits 0 once the 3 defects are patched" || bad "check_citations clean copy: exit $clean_rc"
 
+# A shorter cited number must not falsely match as a substring of a longer one in the cited file.
+tmp=$(mktemp -d)
+printf 'Result: 0.61 (data.csv)\n' > "$tmp/note.md"
+printf 'value,0.615\n' > "$tmp/data.csv"
+out=$(python3 check_citations.py --json "$tmp")
+rc=$?
+rm -rf "$tmp"
+echo "$out" | grep -q '"kind": "number-not-found"' && [ "$rc" -eq 1 ] \
+  && ok "check_citations: 0.61 is not credited against a file that only holds 0.615" \
+  || bad "check_citations number boundary: rc=$rc out=$out"
+
+# check_citations.py is quiet on the falsify fixtures/target repo (no citation false positives
+# from its .py source, once .py is out of the scanned set).
+out=$(python3 check_citations.py --json ../fixtures/target)
+n=$(echo "$out" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
+[ "$n" = "0" ] && ok "check_citations is quiet on falsify/fixtures/target" || bad "check_citations fixtures/target: $n finding(s), want 0"
+
 exit $fail

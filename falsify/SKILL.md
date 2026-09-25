@@ -199,8 +199,9 @@ Score by *operational* reachability, not just structural:
 happen? Compare the report to the artefact — the row, the file, the message. Prefer designs where the
 artefact settles the claim and the report cannot.
 
-A cited file is a claim too: `scripts/check_citations.py DIR` checks that every path a document
-cites resolves to a real file, and that any number attributed to it occurs there.
+A cited file is a claim too: when a target's notes, logs or results cite files as evidence,
+`scripts/check_citations.py DIR` checks that each cited path exists and holds the number attributed
+to it. Point it at those notes, not at instructions or docs, where example paths read as missing.
 
 ---
 

@@ -1,0 +1,30 @@
+{
+  "target": "citations/",
+  "total_citations": 40,
+  "bad": [
+    {
+      "kind": "missing",
+      "citing": "sweep-overview.md:19",
+      "cited": "results/r06.json",
+      "why": "round 6 was never run; the file does not exist"
+    },
+    {
+      "kind": "missing",
+      "citing": "sweep-overview.md:20",
+      "cited": "results/archive/r00.csv",
+      "why": "no archive/ directory exists under results/"
+    },
+    {
+      "kind": "number-not-found",
+      "citing": "rounds/round-03.md:7",
+      "cited": "results/r03.csv",
+      "why": "note says throughput 415.7 MB/s; results/r03.csv says 405.7 (transcription flip)"
+    }
+  ],
+  "decoys_not_bad": [
+    "sweep-overview.md: results/*.csv (glob, not a citation)",
+    "sweep-overview.md: v1.4.2 (version string, not a path)",
+    "sweep-overview.md: bench.metrics.summarize() (a module path, not a file)",
+    "sweep-overview.md: https://example.org/bench/results/r01.json (a URL, not a repo-relative citation)"
+  ]
+}

@@ -19,8 +19,9 @@ Findings it can raise (name — meaning):
   duplicate-verdict   FALSIFY: appears more than once (a template echoed above a real verdict)
   partial-in-final    FALSIFY_PARTIAL: in a finished report
   gap-arithmetic      budget + instruction ≠ not checked
-  mislabel            a finding's label disagrees with §6 applied to its own severity × confidence
-                      and the line does not say `override:`
+  mislabel            a finding's label disagrees with §6 applied to its own severity × confidence,
+                      the finding does not say `override:`, and it is not a BLOCK that names one of
+                      §6's categories (security, authz, data loss, destructive, a decorative guard)
   two-labels          a finding carries two labels (CONSIDER→BLOCK); write one, and `override:` if
                       it differs from the arithmetic
   straddles           a severity or confidence range crosses a §6 threshold, so the bucket is
@@ -46,7 +47,6 @@ NUM = r"(?:[0-5](?:\.\d+)?|\.\d+)"
 RANGE = r"(?:\s*[–-]\s*(" + NUM + r"))?"
 SXC_RE = re.compile(r"(?<![\w.])(" + NUM + r")" + RANGE + r"\s*[×x*]\s*(" + NUM + r")" + RANGE + r"(?![\w.])")
 SEVCONF_RE = re.compile(r"severity\s*[:=]?\s*(" + NUM + r")\D{0,40}?confidence\s*[:=]?\s*(" + NUM + r")", re.I)
-LABEL_RE = re.compile(r"\b(BLOCK|CONSIDER|NOTE|UNMEASURED)\b(\s*(?:→|->)\s*(BLOCK|CONSIDER|NOTE|UNMEASURED)\b)?")
 
 
 def bucket(risk):
@@ -58,17 +58,60 @@ def bucket(risk):
 
 
 def parse_score(text):
-    """Return (sev_lo, sev_hi, conf_lo, conf_hi) or None. Severity is the 1–5 number, confidence 0–1."""
-    m = SXC_RE.search(text)
-    if m:
+    """Return (sev_lo, sev_hi, conf_lo, conf_hi) or None. Severity is the 1–5 number, confidence 0–1.
+
+    Only a pair whose confidence is at most 1 counts, so "a 3x3 grid" or "2 × 4 contracts" in a
+    finding's prose is not read as a score."""
+    for m in SXC_RE.finditer(text):
         s1, s2, c1, c2 = (float(x) if x else None for x in m.groups())
-        # "(4 × 0.90)": the first number is severity when it is > 1 or the second is ≤ 1
-        return (s1, s2 or s1, c1, c2 or c1)
-    m = SEVCONF_RE.search(text)
-    if m:
+        s2, c2 = s2 or s1, c2 or c1
+        if 0 < s1 <= 5 and 0 < s2 <= 5 and c1 <= 1 and c2 <= 1:
+            return (s1, s2, c1, c2)
+    for m in SEVCONF_RE.finditer(text):
         s, c = float(m.group(1)), float(m.group(2))
-        return (s, s, c, c)
+        if 0 < s <= 5 and c <= 1:
+            return (s, s, c, c)
     return None
+
+
+# A finding starts at a heading, bullet, numbered item, table row, bold lead or F<n> id.
+START_RE = re.compile(r"^\s*(#+\s|[-*+]\s|\|\s*\S|\d+[.)]\s|\*\*|F\d+\b)")
+# Its label is the first word after the marker and an optional id ("### F1 — BLOCK", "- **NOTE**",
+# "| F4 | NOTE |"), or a label written straight before its score ("… — BLOCK (4 × 0.9)").
+# "no NOTE-level issues" is neither, so it is not a finding.
+_L = r"(BLOCK|CONSIDER|NOTE|UNMEASURED)"
+LEAD_RE = re.compile(r"^\s*(?:#+|[-*+]|\d+[.)]|\|)?\s*(?:\*\*)?\s*(?:F\d+|\d+[.)]?)?\s*[—–:.|*-]*\s*(?:\*\*)?\s*"
+                     + _L + r"\b(?:\*\*)?(\s*(?:→|->)\s*" + _L + r"\b)?")
+INLINE_RE = re.compile(r"\b" + _L + r"\b(\s*(?:→|->)\s*" + _L + r"\b)?\**\s*\(")
+# §6 makes these BLOCK whatever the arithmetic says. Matching them is textual, so it is a floor:
+# a finding that names one of them is not second-guessed.
+# debt: keyword match, not a judgement; a BLOCK that merely mentions "auth" passes. Upgrade path is a
+# required `§6:` tag on the finding once readers are shown to write it.
+CATEGORY_RE = re.compile(r"secur|\bauth|data[- ]loss|destructive|decorative\b[^.\n]{0,80}\b(guard|check)|"
+                         r"\b(guard|check)\b[^.\n]{0,80}\bdecorative", re.I)
+
+
+def finding_blocks(lines):
+    """Group body lines into findings: (first line index, text). A heading's finding runs to the next
+    start line, blank lines included, so a score written under the heading belongs to it; any other
+    finding ends at a blank line or the next start line."""
+    blocks, cur, start, heading = [], [], None, False
+    for i, l in enumerate(lines):
+        if START_RE.match(l) or (not l.strip() and not heading):
+            if cur:
+                blocks.append((start, "\n".join(cur)))
+            cur, start, heading = [], None, False
+            if not l.strip():
+                continue
+            heading = l.lstrip().startswith("#")
+        if not l.strip():
+            continue
+        if start is None:
+            start = i
+        cur.append(l)
+    if cur:
+        blocks.append((start, "\n".join(cur)))
+    return blocks
 
 
 def check(text):
@@ -103,18 +146,15 @@ def check(text):
     by_label = dict.fromkeys(LABELS, 0)
     by_risk = dict.fromkeys(LABELS, 0)
     scored_any = False
-    for i, l in enumerate(lines[:body_end]):
-        if not l.strip() or l.lstrip().startswith("FALSIFY"):
+    for i, block in finding_blocks(lines[:body_end]):
+        head = block.splitlines()[0]
+        if head.lstrip().startswith("FALSIFY"):
             continue
-        lm = LABEL_RE.search(l)
-        score = parse_score(l)
+        lm = LEAD_RE.match(head) or INLINE_RE.search(head)
+        score = parse_score(block)
         if not lm and not score:
             continue
-        # A finding line: a heading, bullet or table row that names a label or scores itself.
-        is_finding = bool(score) or bool(re.match(r"^\s*(#+|[-*]|\|\s*\S|\d+[.)]|\*\*|F\d+)", l))
-        if not is_finding:
-            continue
-        override = "override:" in l.lower()
+        override = "override:" in block.lower()
         label = lm.group(1) if lm else None
         if lm and lm.group(3):
             findings.append(("two-labels", f"line {i + 1}: {lm.group(0).strip()} — one label per finding; `override:` says why it differs from the arithmetic"))
@@ -129,12 +169,13 @@ def check(text):
                 findings.append(("straddles", f"line {i + 1}: {s_lo}–{s_hi} × {c_lo}–{c_hi} spans {b_lo} to {b_hi}; score the finding once"))
                 by_risk[label or b_hi] += 1
                 continue
-            if label and label != b_hi and override:
-                by_risk[label] += 1  # a stated override is a decision; count it where it was put
+            categorical = label == "BLOCK" and b_hi != "BLOCK" and CATEGORY_RE.search(block)
+            if label and label != b_hi and (override or categorical):
+                by_risk[label] += 1  # a stated override or a §6 category is a decision; count it where it was put
             else:
                 by_risk[b_hi] += 1
-            if label and label != "UNMEASURED" and label != b_hi and not override:
-                findings.append(("mislabel", f"line {i + 1}: labelled {label}, but {s_hi} × {c_hi} = {s_hi * c_hi:.2f} is {b_hi} under §6 (no `override:` given)"))
+            if label and label != "UNMEASURED" and label != b_hi and not (override or categorical):
+                findings.append(("mislabel", f"line {i + 1}: labelled {label}, but {s_hi} × {c_hi} = {s_hi * c_hi:.2f} is {b_hi} under §6 (no `override:` and no §6 BLOCK category given)"))
         elif label and label != "UNMEASURED":
             findings.append(("unscored", f"line {i + 1}: labelled {label} with no severity × confidence"))
 

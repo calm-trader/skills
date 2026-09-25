@@ -45,4 +45,16 @@ assert hits == ["C1", "D1", "D2", "D3"], hits
 assert d["false_positives"] == [], d["false_positives"]
 PY
 
+# --no-gate scores a report with no FALSIFY: line (the no-skill arm) and reports compliance apart.
+# The report names D4 as a module (`adapter.SIDE`) and has two near-misses the old key credited:
+# a side-mapping complaint that is not about the missing convention, and a released=False test gap.
+out=$(python3 ../fixtures/score.py --no-gate --json fixtures/report-noskill.md) \
+  && python3 - "$out" <<'PY' && ok "score.py --no-gate scores a report without a verdict line: D4 by module name, no near-miss credit" || bad "score.py --no-gate"
+import json, sys
+d = json.loads(sys.argv[1])
+hits = sorted(k for k, v in d["defects"].items() if v["found"])
+assert hits == ["D4"], hits
+assert d["compliance"] == ["no-verdict-line"], d["compliance"]
+PY
+
 exit $fail

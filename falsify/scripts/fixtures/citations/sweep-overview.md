@@ -1,4 +1,4 @@
-# Sweep overview — toy hash table, five rounds
+# Sweep overview: toy hash table, five rounds
 
 Table size doubled each round from 1024 to 16384. Numbers below are pulled straight
 from each round's result file; see `rounds/` for the run notes.

@@ -1,4 +1,4 @@
-# Round 4 — table size 8192
+# Round 4: table size 8192
 
 - Collision rate 0.014 (results/r04.json).
 - Throughput 389.9 MB/s, from results/r04.json.

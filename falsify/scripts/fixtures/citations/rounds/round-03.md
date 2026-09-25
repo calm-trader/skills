@@ -1,4 +1,4 @@
-# Round 3 — table size 4096
+# Round 3: table size 4096
 
 Third doubling. Numbers pulled from results/r03.csv while it was still open in the
 spreadsheet, so double-check them against the file, not against this note.

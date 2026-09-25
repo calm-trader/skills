@@ -1,4 +1,4 @@
-# Round 5 — table size 16384
+# Round 5: table size 16384
 
 Last round in the sweep before diminishing returns set in.
 

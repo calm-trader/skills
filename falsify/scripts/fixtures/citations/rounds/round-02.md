@@ -1,4 +1,4 @@
-# Round 2 — table size 2048
+# Round 2: table size 2048
 
 Doubling the table to see how much the collision rate improves on its own.
 

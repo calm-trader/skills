@@ -1,4 +1,4 @@
-# Round 1 — table size 1024
+# Round 1: table size 1024
 
 Baseline run of the toy hash at the smallest table size in the sweep.
 

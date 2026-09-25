@@ -36,4 +36,27 @@ assert hits == ["C1", "D1", "D2", "D3"], hits
 assert d["false_positives"] == [], d["false_positives"]
 PY
 
+
+# check_citations.py finds exactly the 3 keyed defects on the fixture and nothing else.
+got=$(python3 check_citations.py --json fixtures/citations | python3 -c '
+import json, sys
+findings = json.load(sys.stdin)
+print(" ".join(sorted(f["kind"] + ":" + f["citing"] for f in findings)))
+')
+want=$(python3 -c '
+import json
+key = json.load(open("fixtures/citations-key.json"))
+print(" ".join(sorted(b["kind"] + ":" + b["citing"] for b in key["bad"])))
+')
+[ "$got" = "$want" ] && ok "check_citations finds exactly the 3 keyed defects: $got" || bad "check_citations fixture: got '$got' want '$want'"
+
+# A clean copy (the 3 defects patched) passes.
+tmp=$(mktemp -d)
+cp -R fixtures/citations "$tmp/citations"
+python3 fixtures/fix-citations.py "$tmp/citations"
+python3 check_citations.py "$tmp/citations" >/dev/null
+clean_rc=$?
+rm -rf "$tmp"
+[ "$clean_rc" -eq 0 ] && ok "check_citations exits 0 once the 3 defects are patched" || bad "check_citations clean copy: exit $clean_rc"
+
 exit $fail

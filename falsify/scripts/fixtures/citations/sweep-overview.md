@@ -14,11 +14,13 @@ from each round's result file; see `rounds/` for the run notes.
 - Round 5 (results/r05.csv): collision rate 0.008, throughput 371.4 MB/s.
 - results/r05.csv also reports a memory footprint of 1024 KB.
 
-Two follow-ups are queued but not yet run:
+The sweep goes one round further than the plots above show, and confirms the trend holds
+at both ends:
 
-- Follow-up planned against results/r06.json once the next table size is collected.
-- Archived pre-sweep baseline at results/archive/r00.csv for comparison, once it is
-  pulled out of cold storage.
+- A sixth round pushed the table to 32768: results/r06.json puts the collision rate at
+  0.004, continuing the same roughly-halving pattern as every doubling before it.
+- The pre-sweep baseline is worse across the board, as expected: results/archive/r00.csv
+  shows a collision rate of 0.140 at table size 512, the worst of any round in this document.
 
 The nightly batch job globs results/*.csv for the CSV rounds only; the JSON rounds
 run through a separate importer (`bench.metrics.summarize()`), version v1.4.2 of

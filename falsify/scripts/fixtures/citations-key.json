@@ -4,15 +4,15 @@
   "bad": [
     {
       "kind": "missing",
-      "citing": "sweep-overview.md:19",
+      "citing": "sweep-overview.md:20",
       "cited": "results/r06.json",
-      "why": "round 6 was never run; the file does not exist"
+      "why": "cited in present tense as evidence for a specific collision rate (0.004) that a sixth round supposedly confirmed; round 6 was never run and the file does not exist"
     },
     {
       "kind": "missing",
-      "citing": "sweep-overview.md:20",
+      "citing": "sweep-overview.md:22",
       "cited": "results/archive/r00.csv",
-      "why": "no archive/ directory exists under results/"
+      "why": "cited in present tense as evidence for a specific baseline collision rate (0.140); no archive/ directory exists under results/"
     },
     {
       "kind": "number-not-found",

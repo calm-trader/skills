@@ -137,6 +137,28 @@ The agent files are byte-identical to the ones in the project they came from, an
 enforces it. A genericised copy, edited for publication and never actually run, is precisely the
 failure `falsify` exists to catch.
 
+### [`0dte-index-trading`](./0dte-index-trading) — 0DTE index trades from dealer positioning
+
+A brief for an agent that calls and studies 0DTE index options trades: SPX (via the `SPXW` root),
+SPY and QQQ read together, ES1/NQ1 futures levels, SMH as the tech-leadership check, Tempest
+volatility and options flow, all through the Skylit API.
+
+Its unifying lesson: **the teaching is not the edge.** A year-long backtest of 70,280 simulated
+trades found no setup with a proven edge, including the first versions of the founder's own
+deflection rules. So every rule is tagged `[MEASURED]`, `[VERIFIED]` or `[REPORTED]`, and the skill
+says how a new idea earns a place (day-clustered interval above zero, both halves positive, a locked
+holdout) instead of asserting that it works.
+
+The things that cost time to learn:
+
+- **Ask for `SPXW`, not `SPX`.** The `SPX` board holds only the AM-settled monthlies, so a 0DTE read
+  of it is silently empty of the gamma that matters.
+- **`ES` is a utility stock.** The futures are `ES1` and `NQ1` (Atlas, Rolling). Atlas draws the
+  derived index levels on them; its API returns bars only, so levels are rebuilt from the option
+  boards at the live ratio.
+- **A stop one whole node away kills deflection trades.** The 3:1 target then sits beyond a
+  session's reach, and the backtest won 4.6% of them.
+
 ## Using them
 
 Copy a skill directory into a project's `.claude/skills/`:

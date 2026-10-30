@@ -54,6 +54,11 @@ fp 'Underpowered' \
    '"Underpowered" refutation (§3)' '2026-09-24, PR #16'
 fp 'FALSIFY: <n> BLOCK' \
    'parsable last line with UNMEASURED slot (§7)' '2026-09-24, PR #16; a verdict a reader cannot find is a gate that did not happen'
+fp 'Research claims — is the number real' \
+   'research claims: look-ahead, seals, hashes, registered path (§8)' \
+   '2026-10-30; study claims a code review never names, each caught by an audit in a real research repo'
+fp 'Write the verdicts before the last door opens' \
+   'pre-committed kill/weak/survive verdicts before a holdout (§8)' '2026-10-30'
 fp 'FALSIFY_PARTIAL' \
    'cumulative messages when run as a sub-agent (§0)' '2026-09-24; only a sub-agent'"'"'s final message reaches the caller'
 
@@ -76,6 +81,7 @@ declare -a KW=(
   'budget|findings first|cumulative|FALSIFY_PARTIAL|one reader|0'
   'severity|confidence|risk|threshold|6'
   'taxonomy|claim kind|rows 2|1'
+  'look-ahead|lookahead|holdout|seal|frozen hash|registered|base rate|ground truth|8'
   'lens|fan out|fan-out|2'
 )
 cites=0

@@ -56,6 +56,18 @@ and a green test suite:
   null blind-reader test. `[measured: null]`, see `MEASUREMENTS.md`. The trading-specific checks
   that motivated them live in `tradingview-backtesting` §13.
 
+- **Research claims** (§8) — nine claims a study makes that a code review never names (no
+  look-ahead, the holdout is sealed, the hash pins the result, the registered search ran, the
+  judging data was not used to design, fills, base rate, ground-truth provenance, checker evidence
+  on file), plus three rules on timing, pre-committed verdicts and reviewer substitution. Added
+  2026-10-30 from a review of a month of adversarial audits on a trading-research repository, where
+  each row's failure was caught by an audit, in at least one case only after the data it protected
+  had been read. `[reported]`. Not the withdrawn rows above: those were taxonomy rows about strategy
+  numbers (now `tradingview-backtesting` §13); these are pipeline claims, in their own section, and
+  their effect on readers has not been measured.
+- **A plain-language opening** ("What this is, in plain words") so anyone opening the file knows
+  what the skill is for before the rules start. Added 2026-10-30. `[untested]`
+
 ### Tags
 
 Each addition above carries one tag, so a reader can tell evidence from belief about this skill's

@@ -7,10 +7,36 @@ description: >-
   reviewers, refutes both the findings AND the all-clears using a different search modality, then
   demands empirical proof: a guard is not a guard until it has been seen to fail. Invoke with
   /falsify, or when asked to "attack this", "adversarial review", "audit before commit", "what is
-  wrong with this", or when a review keeps coming back clean and you do not believe it.
+  wrong with this", or when a review keeps coming back clean and you do not believe it. Also audits
+  research claims (§8): backtests, pre-registrations, holdout seals, frozen hashes, scorers, and
+  "this beats chance".
 ---
 
 # Falsify
+
+## What this is, in plain words
+
+Imagine a friend hands you their homework and says "it's all correct." A normal checker reads it
+and nods. Falsify is the tough but fair teacher: it **tries to prove each answer wrong**. If it
+tries hard and cannot, the answer is probably right. If nobody tried, we simply do not know yet.
+
+It asks four questions about anything a project claims:
+
+1. **Is it right?** Does the code do what it says?
+2. **Would we notice if it broke?** Break the thing on purpose; a test that stays green is not
+   protecting anything.
+3. **Does it actually run?** Code that is never called with real data can be perfect and useless.
+4. **For research: is the result real, or luck, or peeking?** A backtest can look great because it
+   saw the future, used easy fills, or was tuned on the data that was supposed to judge it (§8).
+
+It only reads and reports. It never changes your files. You get back a list of problems, worst
+first, each with a concrete "here is how it goes wrong"; a list of what it did *not* check; and one
+last line that counts everything, so a silent run can never pass for a clean one.
+
+Use it before you commit, before you trust a backtest number, and above all before you open data
+you can only look at once.
+
+---
 
 Reviewing a diff finds bugs in code someone wrote. It does not find the defects that survive review,
 and those are the expensive ones. Every defect below passed code review, passed CI, and shipped:
@@ -71,6 +97,9 @@ Before attacking, name what is being claimed. Most reviews only attack the first
 | 6 | **This succeeded** | reports success while storing, sending, or changing nothing | compare the report against the side effect |
 
 Rows 2–6 are where the durable defects live, because rows 2–6 are what nobody checks.
+
+Auditing a study rather than a service (a backtest, a pre-registration, a scorer, a replication)?
+Run §8 as well: its claims are about numbers, and about data the researcher promised not to read.
 
 ---
 
@@ -245,3 +274,44 @@ verdict that a reader cannot find is a gate that did not happen. If you score a 
 a decision from a slip.
 
 Never edit, stage, or commit. This skill diagnoses; the operator decides.
+
+---
+
+## 8. Research claims — is the number real, or luck, or peeking?
+
+A study makes claims a code review never names: that it did not see the future, that the data held
+back to judge it is still untouched, that the run followed the plan written before it. Each one
+below shipped in a real research repository, passed its own tests and at least one review, and was
+caught only by attacking it. Run these as extra lenses in §2; they score and report like any other
+finding. Unit, window reuse, power, benchmark, concentration and trial counts for strategy results
+are in `tradingview-backtesting` §13 and are not repeated here. `[reported]` for every row: each
+failure was observed; the rows' effect on readers is not measured.
+
+| # | claim | how it fails | how to attack it |
+|---|---|---|---|
+| a | **"No look-ahead"** | a forming bar is visible to the decision; a session clock starts at the wrong midnight; levels from adjusted prices are filled at raw prices; calendar flags are read from vendor data holes | **prefix test**: cut the data at time t, recompute every decision up to t, diff against the full run. Any change is look-ahead. Recompute one bucket boundary by hand |
+| b | **"The held-out data is sealed"** | the seal blocks *reporting* sealed numbers but not *loading* sealed bars; the seal trusts a spoofable name (`sys.argv[0]`); the "consumed" marker is written before inputs are validated, so one typo spends the holdout with no result | **sabotage the seal** (§4): from any script other than the final one, try to load sealed data and watch it refuse. Feed the final step a malformed manifest: the holdout must still be unconsumed afterwards |
+| c | **"The frozen hash pins the result"** | the hash covers the rule file but not the data, configs, helper modules or the output that was reported | list every input the run opens or imports; each must be in the hash. Change one file outside it and rerun: result moves, hash does not, finding |
+| d | **"This is the registered search"** | a checker rejects a step the protocol allowed; a stateful filter's order flips an acceptance by a hair; the "combined final" drops an accepted step; a cap is raised and nothing flags it | replay the procedure from the pre-registration *text alone* and diff the path, step by step, against what ran |
+| e | **"The judging data was never used to design"** | a kept rule cites examples dated inside the check or forward window; the check half is scored for more candidates than registered | grep every rule's citations (dates, ids) against the sealed and forward windows; count scorings of the check set against the registered number |
+| f | **"Fills are realistic"** | fills at the bar's extreme; a touch counted as a fill without trading through; stop and target in one bar resolved in the strategy's favour | rerun stop-first with trade-through fills; report what share of the edge (or the loss) is fill friction |
+| g | **"This beats chance"** | levels, zones, sweeps or patterns that price hits most days anyway; wide zones that make any call "hit" | score the same rule on randomly placed levels or shuffled / driftless paths with the same hold and costs; the claim must beat that base rate, not zero |
+| h | **"The source is ground truth"** | selected recaps, annotations drawn after the move, fields inferred and then treated as stated | tag each field stated / visible / inferred / unknown; anything inferred is excluded from validation, and "ground truth" becomes "selected examples" |
+| i | **"The checker verified it"** | the evidence lives in a scratch journal or a workflow log, not next to the report; a number exists only in a session transcript | §5 applied to evidence: the file is in the repository and carries the number. If not, the claim is UNMEASURED |
+
+**Timing is part of the finding.** A research finding is worth most before the data it protects is
+read; afterwards it can only relabel a result, never rescue it. So run §8 on the pre-registration
+and on the code *before* any design, validation or holdout number exists, and again on every
+amendment before the run resumes. If you are auditing after a split was opened, say in the report
+which findings arrived too late to change anything. `[reported]`
+
+**Write the verdicts before the last door opens.** Before a holdout is read, the plan states in
+advance which result means *kill*, *weak* and *survive*, and that text is inside the frozen hash.
+A verdict chosen after the number is seen is a claim nobody can falsify (§3d). `[reported]`
+
+**Say who actually reviewed.** If the planned reviewer could not run (a usage limit, a missing
+tool) and another model did, put that in the report's first line. A substitute's all-clear on
+anything that touches a seal or changes a verdict is re-read by the planned reviewer before it
+counts; one substitute in a real study scored two calls as hits that the planned reviewer
+reclassified. `[reported]`
+

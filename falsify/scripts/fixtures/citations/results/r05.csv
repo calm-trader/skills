@@ -1,0 +1,6 @@
+metric,value
+table_size,16384
+collision_rate,0.008
+throughput_mb_s,371.4
+mean_probe_len,1.01
+memory_kb,1024

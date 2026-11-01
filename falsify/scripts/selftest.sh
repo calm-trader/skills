@@ -21,6 +21,19 @@ got=$(names fixtures/report-echo.md)
 want="count-mismatch duplicate-verdict gap-arithmetic partial-in-final"
 [ "$got" = "$want" ] && ok "check_report flags an echoed template, a partial marker and bad arithmetic" || bad "check_report echo: got '$got' want '$want'"
 
+# §6 makes some findings BLOCK whatever the number; a report that says which one is consistent.
+python3 check_report.py fixtures/report-categorical.md >/dev/null && ok "check_report accepts a BLOCK below 3.5 that names a §6 category" || bad "check_report categorical"
+got=$(names fixtures/report-block-low.md)
+want="count-mismatch mislabel"
+[ "$got" = "$want" ] && ok "check_report still flags a BLOCK below 3.5 with no category: $got" || bad "check_report block-low: got '$got' want '$want'"
+
+# Shapes readers write: score on the line under its heading, a label word in passing, "3x3", a table.
+python3 check_report.py fixtures/report-shapes.md >/dev/null && ok "check_report reads a heading's score from the next line and ignores a label in passing and 3x3" || bad "check_report shapes: $(names fixtures/report-shapes.md)"
+
+# Grouping must not let an aside's score stand in for the finding's own: two scores, no decision.
+got=$(names fixtures/report-two-scores.md)
+[ "$got" = "two-scores" ] && ok "check_report flags a finding with two different scores instead of picking one" || bad "check_report two-scores: got '$got'"
+
 # The fixture target's own suite is green; that is the point of the fixture.
 ( cd ../fixtures/target && python3 -m unittest discover -q -s tests -t . 2>&1 | tail -1 | grep -q '^OK' ) \
   && ok "fixture target: its test suite passes with every planted defect in place" || bad "fixture target suite"
@@ -35,5 +48,85 @@ hits = sorted(k for k, v in d["defects"].items() if v["found"])
 assert hits == ["C1", "D1", "D2", "D3"], hits
 assert d["false_positives"] == [], d["false_positives"]
 PY
+
+# --no-gate scores a report with no FALSIFY: line (the no-skill arm) and reports compliance apart.
+# The report names D4 as a module (`adapter.SIDE`) and has two near-misses the old key credited:
+# a side-mapping complaint that is not about the missing convention, and a released=False test gap.
+out=$(python3 ../fixtures/score.py --no-gate --json fixtures/report-noskill.md) \
+  && python3 - "$out" <<'PY' && ok "score.py --no-gate scores a report without a verdict line: D4 by module name, no near-miss credit" || bad "score.py --no-gate"
+import json, sys
+d = json.loads(sys.argv[1])
+hits = sorted(k for k, v in d["defects"].items() if v["found"])
+assert hits == ["D4"], hits
+assert d["compliance"] == ["no-verdict-line"], d["compliance"]
+PY
+
+# check_citations.py finds exactly the 3 keyed defects on the fixture and nothing else.
+got=$(python3 check_citations.py --json fixtures/citations | python3 -c '
+import json, sys
+findings = json.load(sys.stdin)
+print(" ".join(sorted(f["kind"] + ":" + f["citing"] for f in findings)))
+')
+want=$(python3 -c '
+import json
+key = json.load(open("fixtures/citations-key.json"))
+print(" ".join(sorted(b["kind"] + ":" + b["citing"] for b in key["bad"])))
+')
+[ "$got" = "$want" ] && ok "check_citations finds exactly the 3 keyed defects: $got" || bad "check_citations fixture: got '$got' want '$want'"
+
+# A clean copy (the 3 defects patched) passes.
+tmp=$(mktemp -d)
+cp -R fixtures/citations "$tmp/citations"
+python3 fixtures/fix-citations.py "$tmp/citations"
+python3 check_citations.py "$tmp/citations" >/dev/null
+clean_rc=$?
+rm -rf "$tmp"
+[ "$clean_rc" -eq 0 ] && ok "check_citations exits 0 once the 3 defects are patched" || bad "check_citations clean copy: exit $clean_rc"
+
+# A shorter cited number must not falsely match as a substring of a longer one in the cited file.
+tmp=$(mktemp -d)
+printf 'Result: 0.61 (data.csv)\n' > "$tmp/note.md"
+printf 'value,0.615\n' > "$tmp/data.csv"
+out=$(python3 check_citations.py --json "$tmp")
+rc=$?
+rm -rf "$tmp"
+echo "$out" | grep -q '"kind": "number-not-found"' && [ "$rc" -eq 1 ] \
+  && ok "check_citations: 0.61 is not credited against a file that only holds 0.615" \
+  || bad "check_citations number boundary: rc=$rc out=$out"
+
+# A cited number with its sign flipped is not credited: 3.2% against a file that holds -3.2%.
+tmp=$(mktemp -d)
+printf 'Drawdown 3.2%% (data.csv)\n' > "$tmp/note.md"
+printf 'dd,-3.2%%\n' > "$tmp/data.csv"
+out=$(python3 check_citations.py --json "$tmp"); rc=$?
+rm -rf "$tmp"
+echo "$out" | grep -q '"kind": "number-not-found"' && [ "$rc" -eq 1 ] \
+  && ok "check_citations: 3.2% is not credited against a file that only holds -3.2%" \
+  || bad "check_citations sign: rc=$rc out=$out"
+
+# A citation that resolves only outside the scanned directory is missing, not found.
+tmp=$(mktemp -d); mkdir "$tmp/scan"
+printf 'see ../outside.csv\n' > "$tmp/scan/note.md"
+printf 'x\n' > "$tmp/outside.csv"
+out=$(python3 check_citations.py --json "$tmp/scan"); rc=$?
+rm -rf "$tmp"
+echo "$out" | grep -q '"kind": "missing"' && [ "$rc" -eq 1 ] \
+  && ok "check_citations: a path outside the scanned directory is reported missing" \
+  || bad "check_citations outside root: rc=$rc out=$out"
+
+# A scanned file that is not UTF-8 is reported, not skipped as clean.
+tmp=$(mktemp -d)
+printf 'caf\xe9 r09.json\n' > "$tmp/note.md"
+out=$(python3 check_citations.py --json "$tmp"); rc=$?
+rm -rf "$tmp"
+echo "$out" | grep -q '"kind": "unreadable"' && [ "$rc" -eq 1 ] \
+  && ok "check_citations: a non-UTF-8 note is reported unreadable" \
+  || bad "check_citations unreadable: rc=$rc out=$out"
+
+# check_citations.py is quiet on the falsify fixtures/target repo (no citation false positives
+# from its .py source, once .py is out of the scanned set).
+out=$(python3 check_citations.py --json ../fixtures/target)
+n=$(echo "$out" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
+[ "$n" = "0" ] && ok "check_citations is quiet on falsify/fixtures/target" || bad "check_citations fixtures/target: $n finding(s), want 0"
 
 exit $fail

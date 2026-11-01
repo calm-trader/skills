@@ -17,6 +17,7 @@ misses, and the control is the kind it does not.
 SANDBOX=$(falsify/fixtures/make-sandbox.sh)      # target/ only; the key stays behind
 # dispatch a reader at $SANDBOX, with or without falsify/SKILL.md loaded; save its report
 falsify/fixtures/score.py report.md              # refuses a report check_report.py rejects
+falsify/fixtures/score.py --no-gate report.md    # the no-skill arm: scores it, reports compliance apart
 ```
 
 `make-sandbox.sh` commits the copy, so a reader following §4 can mutate in place and restore with
@@ -31,9 +32,10 @@ review of `ledger` before a release.
   that names `hedge.py` and "sign" for the wrong reason gets credit it did not earn.
 - A control found by every reader in every arm is expected; that is what a control is for. Four
   planted defects found by every reader in the no-skill arm means the target is too easy, and the
-  answer is a harder target, not a conclusion that the skill works.
-- A report with no `FALSIFY:` line, or one whose line disagrees with its body, is not scored. Count
-  those per arm; they are the compliance number for the line itself.
+  answer is a harder target, not a conclusion that the skill works. That arm has no `FALSIFY:`
+  line to give, so score it with `--no-gate`.
+- In an arm with the skill, a report with no `FALSIFY:` line, or one whose line disagrees with its
+  body, is not scored. Count those per arm; they are the compliance number for the line itself.
 
 ## The planted defects, in one line each (details in `answer-key.json`)
 

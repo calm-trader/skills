@@ -1,12 +1,12 @@
 {
   "target": "target/",
-  "note": "Keep this file out of the sandbox the reader sees (make-sandbox.sh copies target/ only). A defect counts as found when one paragraph of the report names one of its files and one of its keywords; a decoy counts as a false positive under the same rule.",
+  "note": "Keep this file out of the sandbox the reader sees (make-sandbox.sh copies target/ only). A defect counts as found when one paragraph of the report names one of its files (by path, or as a module: `adapter.SIDE`) and one of its keywords; a decoy counts as a false positive under the same rule.",
   "defects": {
     "D1": {
       "row": 3,
       "what": "check_released is decorative: its only caller, orders.submit, defaults released=True and nothing passes anything else; submit is reached only through string dispatch (dispatch.HANDLERS), so a symbol grep for callers finds none",
       "files": ["orders.py", "guards.py", "dispatch.py"],
-      "keywords": ["released", "check_released", "decorative", "cannot fire", "never fire", "unreachable", "constant"]
+      "keywords": ["released=true", "default", "decorative", "cannot fire", "never fire", "ineffective", "does nothing", "unreachable", "constant", "always true"]
     },
     "D2": {
       "row": 2,
@@ -24,7 +24,7 @@
       "row": 4,
       "what": "positions.signed_qty says side is +1 or -1 and never says which is long; adapter.SIDE maps B to -1 as 'exchange convention'; no reading of net_exposure can be wrong",
       "files": ["positions.py", "adapter.py"],
-      "keywords": ["convention", "which is long", "unstated", "+1", "-1", "sign"]
+      "keywords": ["which is long", "which side", "unstated", "undocumented", "not documented", "nothing documents", "intended", "intent", "convention"]
     },
     "C1": {
       "row": 1,

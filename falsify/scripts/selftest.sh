@@ -94,6 +94,35 @@ echo "$out" | grep -q '"kind": "number-not-found"' && [ "$rc" -eq 1 ] \
   && ok "check_citations: 0.61 is not credited against a file that only holds 0.615" \
   || bad "check_citations number boundary: rc=$rc out=$out"
 
+# A cited number with its sign flipped is not credited: 3.2% against a file that holds -3.2%.
+tmp=$(mktemp -d)
+printf 'Drawdown 3.2%% (data.csv)\n' > "$tmp/note.md"
+printf 'dd,-3.2%%\n' > "$tmp/data.csv"
+out=$(python3 check_citations.py --json "$tmp"); rc=$?
+rm -rf "$tmp"
+echo "$out" | grep -q '"kind": "number-not-found"' && [ "$rc" -eq 1 ] \
+  && ok "check_citations: 3.2% is not credited against a file that only holds -3.2%" \
+  || bad "check_citations sign: rc=$rc out=$out"
+
+# A citation that resolves only outside the scanned directory is missing, not found.
+tmp=$(mktemp -d); mkdir "$tmp/scan"
+printf 'see ../outside.csv\n' > "$tmp/scan/note.md"
+printf 'x\n' > "$tmp/outside.csv"
+out=$(python3 check_citations.py --json "$tmp/scan"); rc=$?
+rm -rf "$tmp"
+echo "$out" | grep -q '"kind": "missing"' && [ "$rc" -eq 1 ] \
+  && ok "check_citations: a path outside the scanned directory is reported missing" \
+  || bad "check_citations outside root: rc=$rc out=$out"
+
+# A scanned file that is not UTF-8 is reported, not skipped as clean.
+tmp=$(mktemp -d)
+printf 'caf\xe9 r09.json\n' > "$tmp/note.md"
+out=$(python3 check_citations.py --json "$tmp"); rc=$?
+rm -rf "$tmp"
+echo "$out" | grep -q '"kind": "unreadable"' && [ "$rc" -eq 1 ] \
+  && ok "check_citations: a non-UTF-8 note is reported unreadable" \
+  || bad "check_citations unreadable: rc=$rc out=$out"
+
 # check_citations.py is quiet on the falsify fixtures/target repo (no citation false positives
 # from its .py source, once .py is out of the scanned set).
 out=$(python3 check_citations.py --json ../fixtures/target)

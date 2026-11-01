@@ -16,9 +16,12 @@ citations.
 
 Findings:
   missing            the cited path does not resolve, relative to the citing file's directory,
-                      each ancestor directory up to DIR, or DIR itself
+                      each ancestor directory up to DIR, or DIR itself; a path that resolves only
+                      outside DIR (`../x.csv`, `/etc/...`) counts as missing and is never opened
   number-not-found    the citing line names a number and that exact number does not occur in the
-                      cited file at a number boundary (not embedded in a longer number)
+                      cited file at a number boundary (not embedded in a longer number, and
+                      not the same digits with the opposite sign)
+  unreadable          a scanned file is not valid UTF-8, so its citations could not be checked
 """
 import json
 import os
@@ -59,15 +62,14 @@ TOKEN_RE = re.compile(
 # "37 trades" is invisible to this check. Live case in this repo: tradingview-backtesting/SKILL.md
 # pairs an early "under 1%" with two scripts cited later in the same bullet. Upgrade: pair each number to its nearest token by
 # distance, and widen the pattern behind a small verb whitelist ("shows", "reports", "at").
+# debt: a citation and its number split across a line wrap are never paired, so the number goes
+# unchecked (falsify/scripts/fixtures/citations/sweep-overview.md lines 20-23 have this shape).
 NUM_RE = re.compile(r"-?\d+\.\d+%?|-?\d+%")
 
 
 def citations(path):
     """Yield (lineno, token, rest_of_line) for each path-like token in a text file."""
-    try:
-        lines = open(path, encoding="utf-8").read().splitlines()
-    except (UnicodeDecodeError, OSError):
-        return
+    lines = open(path, encoding="utf-8").read().splitlines()  # check() reports a failure here
     for i, line in enumerate(lines, 1):
         stripped = URL_RE.sub(" ", line)
         for m in TOKEN_RE.finditer(stripped):
@@ -84,7 +86,8 @@ def resolve(token, citing_dir, root):
     d = os.path.abspath(citing_dir)
     while True:
         cand = os.path.normpath(os.path.join(d, token))
-        if os.path.isfile(cand):
+        inside = os.path.commonpath([root_abs, os.path.abspath(cand)]) == root_abs
+        if inside and os.path.isfile(cand):
             return cand
         if d == root_abs:
             return None
@@ -96,7 +99,7 @@ def resolve(token, citing_dir, root):
 
 def number_in(n, text):
     """True if n occurs in text at a number boundary, not embedded in a longer number."""
-    pat = re.compile(r"(?<![\d.])" + re.escape(n) + r"(?!\d)")
+    pat = re.compile(r"(?<![\d.\-])" + re.escape(n) + r"(?!\d)")
     return pat.search(text) is not None
 
 
@@ -109,7 +112,12 @@ def check(root):
                 continue
             fpath = os.path.join(dirpath, name)
             rel = os.path.relpath(fpath, root)
-            for lineno, token, rest in citations(fpath):
+            try:
+                cites = list(citations(fpath))
+            except (UnicodeDecodeError, OSError) as e:
+                findings.append(("unreadable", rel, 0, "", f"cannot read as UTF-8 ({type(e).__name__})"))
+                continue
+            for lineno, token, rest in cites:
                 target = resolve(token, dirpath, root)
                 if not target:
                     findings.append(("missing", rel, lineno, token, "does not resolve to a file"))

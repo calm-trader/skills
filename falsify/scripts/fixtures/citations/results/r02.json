@@ -1,0 +1,8 @@
+{
+  "round": 2,
+  "table_size": 2048,
+  "collision_rate": 0.047,
+  "throughput_mb_s": 398.2,
+  "mean_probe_len": 1.11,
+  "memory_kb": 128
+}

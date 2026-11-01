@@ -16,6 +16,12 @@ To use one, copy its directory into your project's `.claude/skills/`; see [Using
 
 Adversarial audit. Not just "is this code correct", but *can this claim even be false*.
 
+**In plain words:** most reviewers read your work and nod. Falsify is the tough but fair teacher
+who tries to prove each answer wrong. If it tries hard and cannot, the answer is probably right; if
+nobody tried, nobody knows. It asks four questions: is it right, would a test notice if it broke,
+does it ever actually run, does it say what "right" looks like, and, for research, is the number real or did the study peek at the data
+that was supposed to judge it. It only reads and reports, never edits.
+
 Reviewing a diff finds bugs in code someone wrote. It does not find the defects that **survive**
 review, and those are the expensive ones. Each of these passed review, passed CI, and shipped:
 
@@ -39,6 +45,10 @@ What it does differently:
   question is "has it ever run".
 - **Findings first, emitted incrementally**, and a run ending with no verdict counts as FAIL rather
   than clean — because a silent run and a clean run must never look the same.
+- **Audits research, not just code** (§8). Look-ahead by prefix test, holdout seals attacked on a
+  decoy copy until they refuse, frozen hashes that must cover every input, and the run replayed
+  against the plan written before it. Findings are timed: one that lands after the data it
+  protects has been read can only relabel a result, never rescue it.
 
 Read-only. It never edits, stages, or commits.
 

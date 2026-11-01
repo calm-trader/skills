@@ -54,6 +54,11 @@ fp 'Underpowered' \
    '"Underpowered" refutation (§3)' '2026-09-24, PR #16'
 fp 'FALSIFY: <n> BLOCK' \
    'parsable last line with UNMEASURED slot (§7)' '2026-09-24, PR #16; a verdict a reader cannot find is a gate that did not happen'
+fp 'Research claims — is the number real' \
+   'research claims: look-ahead, seals, hashes, registered path (§8)' \
+   '2026-10-30; study claims a code review never names, each caught by an audit in a real research repo'
+fp 'Write the verdicts before the last door opens' \
+   'pre-committed kill/weak/survive verdicts before a holdout (§8)' '2026-10-30'
 fp 'FALSIFY_PARTIAL' \
    'cumulative messages when run as a sub-agent (§0)' '2026-09-24; only a sub-agent'"'"'s final message reaches the caller'
 
@@ -67,6 +72,7 @@ sections=$(grep -oE '^##+ ([0-9]+)[a-z]?\.' "$S" | sed -E 's/^##+ ([0-9]+[a-z]?)
 # A citing line that says what it cites for, and the section that says it.
 # keyword regex | section it belongs to
 declare -a KW=(
+  'look-ahead|lookahead|prefix test|holdout seal|frozen hash|pre-registration|registered search|ground truth|8'
   'seen to fail|sabotag|mutation|break the guarded|decorative test|4'
   'second modalit|all-clear|3'
   'decorative guard|constant|3'

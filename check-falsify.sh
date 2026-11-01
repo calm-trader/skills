@@ -72,6 +72,7 @@ sections=$(grep -oE '^##+ ([0-9]+)[a-z]?\.' "$S" | sed -E 's/^##+ ([0-9]+[a-z]?)
 # A citing line that says what it cites for, and the section that says it.
 # keyword regex | section it belongs to
 declare -a KW=(
+  'look-ahead|lookahead|prefix test|holdout seal|frozen hash|pre-registration|registered search|ground truth|8'
   'seen to fail|sabotag|mutation|break the guarded|decorative test|4'
   'second modalit|all-clear|3'
   'decorative guard|constant|3'
@@ -81,7 +82,6 @@ declare -a KW=(
   'budget|findings first|cumulative|FALSIFY_PARTIAL|one reader|0'
   'severity|confidence|risk|threshold|6'
   'taxonomy|claim kind|rows 2|1'
-  'look-ahead|lookahead|holdout|seal|frozen hash|registered|base rate|ground truth|8'
   'lens|fan out|fan-out|2'
 )
 cites=0

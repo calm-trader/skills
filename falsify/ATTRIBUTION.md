@@ -45,7 +45,8 @@ and a green test suite:
 - **"Not checked" names which kind of gap it is** (§7) — budget, or an instruction that could not be
   followed. Added 2026-09-21. `[measured: 2/4 → 6/6]`, see `MEASUREMENTS.md`.
 - **A one-reader fallback** (§0) — run the lenses and skeptics yourself when you cannot dispatch
-  agents, and say so. Added 2026-09-24 from a reader audit of this file. `[untested]`
+  agents, and say so. Added 2026-09-24 from a reader audit of this file. `[measured: says "one
+  reader" 0/6 → 12/12; detection at ceiling]`, see `MEASUREMENTS.md`.
 - **"Underpowered" as a refutation** (§3) of the audit's own finding. Added 2026-09-24. `[untested]`
 - **A parsable last line with an UNMEASURED slot** (§7), read by `scripts/check_report.py`. Added
   2026-09-24. `[untested]` for its effect on readers; the checker itself has a self-test.
@@ -55,6 +56,9 @@ and a green test suite:
 - **Two measurement claim rows and a §3e**, proposed 2026-09-24 and withdrawn the same day after a
   null blind-reader test. `[measured: null]`, see `MEASUREMENTS.md`. The trading-specific checks
   that motivated them live in `tradingview-backtesting` §13.
+- **A positive control for negatives** (§4 in reverse), proposed in #22 and not added after a
+  blind-reader run: readers already flagged the underpowered kill without it. `[measured: null]`, see
+  `MEASUREMENTS.md`.
 
 - **Research claims** (§8) — six pipeline claims a study makes that a code review never names (no
   look-ahead, the holdout is sealed, the hash pins the result, the registered search ran on the

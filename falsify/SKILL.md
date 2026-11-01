@@ -78,7 +78,7 @@ most common failure of this kind of agent.
 - **If you cannot dispatch agents, run the lenses (§2) and the skeptics (§3b) yourself, in order,**
   and say in the report that the panel was one reader. A reader without an Agent tool otherwise
   improvises past "run these in parallel" and "run three skeptics", and the report does not say
-  so. `[untested]`
+  so. `[measured]`: it changes what the report admits, not what the reader finds.
 - **When you run as a sub-agent, only your final message reaches the caller.** So make every
   message cumulative: every finding confirmed so far, in full, then a last line
   `FALSIFY_PARTIAL: <n> findings so far · next: <what you are attacking>`. A run halted at its turn

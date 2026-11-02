@@ -2,10 +2,6 @@ MIT License
 
 Copyright (c) 2026 selva
 
-Portions adapted from mcarlssen/claude-adversarial-review (MIT), which in turn
-vendors its over-engineering lens from DietrichGebert/ponytail-review (MIT).
-See ATTRIBUTION.md for exactly what was taken and what was added.
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

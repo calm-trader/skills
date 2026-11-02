@@ -186,7 +186,12 @@ The strongest technique here, and the one most reviews skip because it requires 
 0. **Decide where the mutation happens, before you make one.** If the working tree is clean, break
    the file in place — git is the restore. If it carries uncommitted changes, work on a copy
    instead: restoring would take that uncommitted work with it, and nothing brings it back.
-1. Break the thing it guards — invert a condition, weaken a check, delete a branch.
+1. Break the thing it guards — invert a condition, weaken a check, delete a branch. Then **prove
+   the break applied** before running anything: `git diff` (or a diff against the copy) shows the
+   mutation. A scripted replacement whose anchor a formatter has reflowed changes nothing, the
+   suite passes, and a test that was never attacked gets credited as strong. A script making
+   several edits asserts every anchor before writing any of them, or a late miss leaves a
+   half-edited file.
 2. Run the test.
 3. **If it still passes, the test is decorative.** Report it as a finding of its own, at the severity
    of the thing it failed to guard.

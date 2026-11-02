@@ -60,6 +60,11 @@ and a green test suite:
   blind-reader run: readers already flagged the underpowered kill without it. `[measured: null]`, see
   `MEASUREMENTS.md`.
 
+- **Prove the sabotage applied** (§4 step 1) — diff before running the test, and assert every
+  anchor before a scripted edit writes anything. Carried in from a downstream copy of this skill,
+  where in one session a mutation whose anchor had been reflowed changed nothing and the green run
+  was credited, and a late-missing anchor left a half-edited file. `[reported]`
+
 - **Research claims** (§8) — six pipeline claims a study makes that a code review never names (no
   look-ahead, the holdout is sealed, the hash pins the result, the registered search ran on the
   registered data, fills, ground-truth provenance), each with the instance that was seen, plus

@@ -65,6 +65,51 @@ Borrows three of its best rules from
 [`mcarlssen/claude-adversarial-review`](https://github.com/mcarlssen/claude-adversarial-review) (MIT)
 and says exactly which, in [`falsify/ATTRIBUTION.md`](./falsify/ATTRIBUTION.md). MIT.
 
+### [`auto-evolve-agentic-system`](./auto-evolve-agentic-system) — build an agent and keep improving it, honestly
+
+For any agentic system: an operations agent that takes actions, a coding agent, a data-pipeline or
+extraction agent, a research or sales agent. It covers the first version, every improvement cycle
+after it, comparisons between versions or rival systems, and running it in production.
+
+**In plain words:** an agent that is tuned against the same test it is graded on will always look
+like it is getting better. This skill keeps the tests the builder never sees locked away, counts
+every time anyone looks at them, and only believes a gain that shows up on tests written by people
+(or models) the builder never worked with.
+
+Each cycle does four working steps:
+
+- **Experts seed the data.** A stakeholder panel (or labelled model personas when no person is
+  available) writes seed cases and personas; a separate sealed side writes nothing the builder
+  can read.
+- **A writer swarm expands it.** Many fresh small-model contexts fill a persona × scenario ×
+  style × step grid, deduplicated, labelled by the generator, with a 150-item human-checked sample.
+- **Error analysis names the next fix.** Open coding, a failure taxonomy counted by segment and
+  step, classes ranked by share × fix rate / cost.
+- **Classification climbs a ladder.** Rules, then a classifier, agreeing learners, calibrated
+  thresholds, an LLM: one rung per version, with rules as the safety floor.
+
+And the guardrails that keep the numbers honest:
+
+- **Sealed banks with a look budget.** `scripts/seal.py` keeps a hash-chained, mirrored ledger of
+  every run; per-item information from a sealed bank is a logged probe that taints it.
+- **Safety is a gate, not points.** No new safety miss against the base, ever; no irreversible
+  effect while a harm signal is unresolved.
+- **The unit of evidence is the writer and the cluster**, not the episode. `scripts/noise.py`
+  gives cluster-aware intervals, paired and family tests, "not worse" checks and alpha spent
+  across cycles.
+- **Two keep routes, labelled differently:** proven on pooled held-out data, or kept on mechanism
+  (a named root cause, not worse anywhere, and a gain on a fresh targeted bank written after the
+  candidate froze).
+- **Fair comparison** (`scripts/compare.py`): two numbers sit side by side only when they come
+  from the same fresh episodes.
+- **After launch:** readiness review, staged rollout, traces, incidents and drift checks
+  (`scripts/drift.py`) feed the next cycle.
+
+Two hypothetical walk-throughs (an operations agent and two coding agents) are in
+`references/worked-example.md`. The scripts are standard-library Python 3.10+ with their own tests,
+and went through several rounds of adversarial review whose reproductions are pinned as tests.
+Pairs well with [`falsify`](./falsify) for the "falsify the last diff" step. MIT.
+
 ### [`tradingview-chart-reading`](./tradingview-chart-reading) — read a live chart without being misled
 
 For getting indicator values, OHLC and a study inventory off a saved TradingView layout. Separate
@@ -175,13 +220,14 @@ if one of these seems not to apply, look for a local file with the same name fir
 
 ## Checking them
 
-`falsify`, `supervision` and `tradingview-backtesting` ship self-checks. Run them all with:
+`falsify`, `supervision`, `tradingview-backtesting` and `auto-evolve-agentic-system` ship
+self-checks. Run them all with:
 
 ```bash
 ./check-all.sh
 ```
 
-It needs bash, python3 and node, changes nothing, and runs in seconds. CI runs the same script on
+It needs bash, python3 and node, changes nothing, and runs in under a minute. CI runs the same script on
 every push and pull request.
 
 ## Writing more

@@ -5,3 +5,6 @@
 # Python bytecode from the falsify self-tests and fixture target.
 __pycache__/
 *.pyc
+
+# Fallback temp dir of the auto-evolve tests in read-only sandboxes.
+.test-tmp/

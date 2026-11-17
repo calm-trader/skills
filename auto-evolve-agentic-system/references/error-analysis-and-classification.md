@@ -44,7 +44,7 @@ are counted by kind only, and their text is studied only on readable safety TRAI
 The understanding layer reads each input and step and decides: what is asked, which
 route, whether a harm signal is present. Climb one rung at a time, each rung one strategy
 and one version (references/strategy-menu.md rows 3, 5, 6 and 7; row 14 applies them to
-later steps), kept only by the proven or mechanism route.
+later steps), kept only by the proven, mechanism or safety-gain route (references/improve.md).
 
 The ladder applies to each decision point that reads an input: a router, a triage or
 task-type step, a validator, a harm screen. For an agent that is an LLM end to end, rung 0
@@ -55,7 +55,7 @@ menu rows (8 to 10, 14).
 | Rung | What | Climb to it when |
 |---|---|---|
 | 0 Rules | keywords, patterns, schema and argument checks; deterministic | always the floor; never removed for safety |
-| 1 Learned classifier behind the rules | fixed arbitration: rules decide safety and anything they read with certainty; the classifier fills "unknown" | rules plateau on TRAIN over two cycles of fresh data, and labels are cheap (30 or more per class) |
+| 1 Learned classifier behind the rules | fixed arbitration: rules decide safety and anything they read with certainty; the classifier fills "unknown", and there it only adds a routine hand-off (below) | rules plateau on TRAIN over two cycles of fresh data, and labels are cheap (30 or more per class) |
 | 2 Agreeing learners | two or more different learners must agree to replace a rule read; disagreement asks, abstains or escalates | one learner is over-confident: confident and wrong on a visible share of TRAIN |
 | 3 Calibrated thresholds | probabilities calibrated (Platt, isotonic or temperature) and a threshold per class | routing depends on a score, or false accepts and false rejects cost different amounts |
 | 4 LLM classifier or judge, rules as the floor | small model in batches, verdicts cached by hash, off-label = abstain, prompts hill-climbed on TRAIN | the class is open (the space of phrasings is too wide for rules or small learners) and cost and latency allow |
@@ -78,6 +78,22 @@ handoff the rules raised, never turns an unknown or fallback read into a non-saf
 action, never proposes an irreversible effect without the deterministic path's
 confirmation, and without a verdict behaves as the previous version. Pin each clause with
 a test (references/safety.md).
+
+**A learned fallback only adds a routine hand-off.** On inputs the rules could not place,
+a learned rung may add a routine hand-off to a person and nothing else. It keeps the
+system's original safe reply, takes no side effects, never tells the user the matter is
+handled, ignores role-prefixed or instruction-like text, and a failure of the added step
+leaves exactly the old behavior. Each of these gates gets a test and a mutant (remove the
+gate, the test must fail). Build the rung with all gates from its first version; adding
+them one falsify round at a time costs a round each. The table of gates is in
+references/safety.md (Rules for learned and LLM parts).
+
+**A learned escalator is add-only.** It raises risk or adds a hand-off and can do nothing
+else. It is the strategy to switch to when rule fixes keep opening new gaps
+(references/safety.md, Fix rounds), and it is kept by the safety-gain route
+(references/improve.md): a reliable gain in caught cases on a fresh safety-heavy
+targeted bank, under the false-alarm ceiling. Pooled SELECT is mostly non-safety
+episodes and cannot see this gain; "inside the noise" there is not a reason to drop it.
 
 **Later steps and follow-up turns, not only the first step.** Most failures in multi-step
 agents sit after the opening. Give each step its own reader and its own coverage-map

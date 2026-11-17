@@ -28,6 +28,7 @@ applies them to later steps.
 | 15 | Production-trace mining | live or shadow traffic exists | error analysis on logs; [Phoenix](https://github.com/Arize-ai/phoenix), [Langfuse](https://github.com/langfuse/langfuse) | the most realistic TRAIN once traffic exists | de-identify; split before reading (references/continuous.md) | adjudication time |
 | 16 | Prompt or model upgrade, treated as a component swap | a better model or prompt family exists | provider release notes; your own fair comparison | varies; a new system to evaluate | a new system: fresh holdout, safety bank, red team, shadow | fresh banks |
 | 17 | Cost reduction: smaller model behind the same gates | cost or latency above the FRAME.md budget | model cascades, e.g. [FrugalGPT](https://arxiv.org/abs/2305.05176) | lower cost, small accuracy risk | same gates; not worse on SELECT; no new safety miss | small |
+| 18 | Learned add-only escalator: a learned part fitted on many writer set-ups' safety TRAIN that can only raise risk (add an escalation, hold or hand-off) | a risk kind is under the FRAME.md target; or two rule rounds in a row each opened new gaps (references/safety.md, Fix rounds) | the union rule of row 3; [Llama Guard](https://github.com/meta-llama/PurpleLlama) as an added screen | more caught cases in the target kind, paid for in false alarms; blind on general SELECT | add-only, pinned by a test; never lowers risk, removes a hand-off or changes a reply; failure of the part leaves the old behaviour; false alarms within the FRAME.md cap; kept by the safety-gain route (references/improve.md) | fresh safety writers, offline training, one targeted safety bank |
 
 Picking rules:
 - One strategy per version: the report must say what did what.
@@ -35,6 +36,11 @@ Picking rules:
   head). Two strategies that each help may overlap.
 - A strategy whose target cell SELECT cannot see goes by the mechanism route with a
   targeted bank, or waits for a bank that can see it. It is not dropped as "noise".
+- An add-only safety strategy (rows 3 and 7 on safety, row 18) is judged by the
+  safety-gain route on a targeted safety bank, not on general SELECT. With zero losses
+  there it is marked "re-test on a targeted safety bank", never dropped as "noise".
+- While a risk kind is under the FRAME.md target, one candidate each cycle aims at the
+  largest miss kind, whatever the ranking says.
 
 ## Rules for learned parts
 

@@ -37,7 +37,9 @@ The bank manifest records phrasings per key so a reader can judge this too.
 | Best of K candidates | `noise.py --family-maps BASE C1 C2 ... --clusters C --ledger L` (Holm over K) |
 | Is a candidate not worse (mechanism route)? | `--paired-maps ... --not-worse MARGIN --of K [--segments S]` (every segment must pass too) |
 | Gain in one cell, not worse elsewhere | `--paired-maps ... --cells CELLS --cell NAME --not-worse MARGIN --ledger L --cycle N` |
-| Can this bank see a fix in a cell? | `noise.py --visible BASE --cells CELLS --clusters C` |
+| More caught in one risk kind, none newly missed (safety-gain route) | on a targeted safety bank: `--paired-maps ... --cells KINDS --cell KIND --segments KINDS --ledger L --cycle N`, no `--not-worse`; every risk-kind row must show "B 0" |
+| False alarms within the cap (safety-gain route) | `noise.py N K` on the near misses, and on pooled SELECT's non-risk episodes: the Wilson upper end at or under the FRAME.md cap |
+| Can this bank see a fix in a cell? | `noise.py --visible BASE --cells CELLS --clusters C` (also per risk kind, on the safety maps) |
 | How big a gain can this bank show? | `noise.py --mde N --clusters M --base-rate P --of K` |
 | How big must a safety bank be? | `noise.py --need RATE` |
 | Two systems on fresh banks | `compare.py` (references/compare.md) |
@@ -64,6 +66,19 @@ cautious side.
   30 (nominal 2.5%; the old interval rule passed 32% and 6%). The price is power: with
   whole phrasings flipping both ways it rarely passes. Write more phrasings rather than
   widen the margin; a margin above 2% needs `--wide-margin` and a FRAME.md reason.
+- Read a "not worse" FAIL by its losses before anything else. With zero episodes lost,
+  the fail comes from the pseudo-loss and the small number of phrasings: it says the
+  bank could not show "not worse", not that the candidate is worse. That is a power
+  result. Add episodes (base and head on retired banks, or one more fresh writer for
+  that segment), test again, and if it still fails report "not shown, underpowered: 0
+  lost, g gained, n phrasings" with the `--mde` figure. Never revert on it. With one or
+  more episodes lost the fail may be harm: bisect (references/improve.md step 8).
+- A pass total can be level while caught high-risk cases fall and false alarms fall with
+  them. Test caught cases per risk kind and false alarms as their own paired tests, and
+  check each against the FRAME.md target, before calling two versions "level".
+- CONFIRM has 2 writer set-ups. The 3 set-up rule is a keep rule for pooled SELECT; on
+  CONFIRM the pooled cluster test decides and the writer line reads "same direction on 2
+  of 2 set-ups (described)".
 - A threshold picked on counts is not a calibrated confidence. If routing depends on a
   score, check calibration on a counts-only bank.
 
@@ -92,10 +107,13 @@ were chosen, not measured: they are FRAME.md settings.
 
 ## Multiplicity across cycles
 
-A mechanism keep is a test the builder may run every cycle. The runner opens each cycle
-once, before any candidate is scored: `seal.py cycle open --of K --reason T` gives it the
+A mechanism or safety-gain keep is a test the builder may run every cycle. The runner
+opens each cycle once, before any candidate is scored: `seal.py cycle open --of K --reason T` gives it the
 next number N and records K, the mechanism tests it may run. `noise.py ... --cell NAME
 --ledger L --cycle N` then tests at 0.05 / K / 2^N, records each use in the ledger, and
-refuses a K+1th test or an older cycle. So the false keeps over all cycles add up to at
-most 0.05. Copy N and K into CYCLES.md. Per-segment and per-bank verdicts use the same
+refuses a K+1th test or an older cycle. A safety-gain test is one of the K. So the false
+keeps over all cycles add up to at most 0.05. The threshold halves every cycle, so size
+a targeted bank (safety or not) before it is written: `noise.py --mde N --clusters M
+--base-rate P --of K*2^N`. The gain must be spread over phrasings: one phrasing that
+flips many episodes is one piece of evidence. Copy N and K into CYCLES.md. Per-segment and per-bank verdicts use the same
 corrected threshold as the headline.

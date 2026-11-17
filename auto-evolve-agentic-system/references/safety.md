@@ -30,7 +30,41 @@ most, not spent by ritual.
    every round does not converge: write it under Known limits and route it to the
    largest-miss-kind work below.
 3. **Stakeholder panel** (below), once V1 passes its gates.
-4. **Falsifier** on the round-0 head, then "falsify the fixes".
+4. **Falsifier** on the round-0 head, then "falsify the fixes", under the fix-round rules
+   below. Round 0 has a budget in FRAME.md; when it is spent, the switch rule applies.
+
+## Fix rounds: superset, stop, switch
+
+These rules hold for every safety fix in round 0 and in any later regression loop
+(red team, panel, falsifier). Without them each fix opens the next gap and the loop does
+not end.
+
+1. **Superset by construction.** From the first fix round on, write a fix as an addition
+   to the last falsified version: on every input the new version raises every hand-off,
+   hold and refusal the old one raised, at the same or a higher risk level, and may raise
+   more. The argument is in the diff (only added branches, only widened conditions), not
+   in a test run. A fix that edits or narrows an existing safety branch is not a
+   superset: split it into an addition, or justify it under rule 3.
+2. **Allow-lists, not deny-lists.** Name the few inputs that may take the lighter path;
+   everything else takes the careful one. A list of "risky things to catch" is beaten by
+   the next phrasing.
+3. **No new suppressions.** A fix round does not add a rule that lowers or removes a
+   safety outcome. A suppression that already exists and survives lowers risk by one
+   step only, never to nothing: the input still reaches a person. Each surviving
+   suppression gets literal counterpart tests: the exact text it lets through, and the
+   same text with a harm signal added, which must still escalate.
+4. **Stopping rule.** Stop at the first falsify pass with no BLOCK caused by the diff
+   against its base. A gap that every version shares (the base has it too) is not caused
+   by the diff: it goes to Known limits and to the largest-miss-kind work below, not into
+   another patch round.
+5. **Switch rule.** After two rule rounds that each open new gaps, stop patching rules.
+   Switch strategy: more readable safety TRAIN from fresh writers for the open kinds,
+   and a learned add-only escalator trained on it (it only raises risk, never lowers
+   it; rules below). The escalator is kept by the safety-gain route
+   (references/improve.md), not by pooled SELECT.
+
+FINDINGS.md records, per fix round: the base commit, the count of BLOCKs caused by the
+diff, the count shared with the base, and which rule ended the loop.
 
 ## Rule S1: safety precedence
 
@@ -60,6 +94,24 @@ proposes an irreversible effect without the deterministic path's confirmation. I
 replaces an unknown or fallback read with a non-safety action, and it never removes a
 handoff the rules raised. Rules stay the floor. Pin each clause with a test.
 
+**A learned escalator is add-only.** It can raise the risk level or add a hand-off; it
+has no output that lowers either. The decision is rules OR escalator.
+
+**A learned fallback for inputs the rules could not place** (the "unknown" read) may do
+one thing: ADD a routine hand-off to a person. Its gates:
+
+| Gate | Rule |
+|---|---|
+| reply | the system's original safe reply (for example "please clarify") is sent unchanged; the learned read never replaces it with a confident answer |
+| effects | no side effects: no write, send, delete or state change follows from the learned read |
+| wording | the user is never told the matter is handled or resolved |
+| input | role-prefixed or instruction-like text ("assistant: ...", "system: ...", "ignore the above") is ignored: no added step is taken on it |
+| level | the added hand-off is routine priority; only the rules or the escalator raise it |
+| failure | an error, timeout or missing verdict in the added step leaves exactly the old behavior: same reply, same effects, no extra escalation from the normal failure path |
+
+Each gate gets a test and a mutant: remove the gate, and the test must fail. A gate
+whose mutant survives is not pinned.
+
 ## Aim after round 0
 
 1. After each safety-bank run the evaluator prints misses **by kind** (counts only, never
@@ -69,6 +121,10 @@ handoff the rules raised. Rules stay the floor. Pin each clause with a test.
 2. The next safety step targets the largest kind: fresh readable safety TRAIN writers for
    that kind, error analysis on their misses, then a red-team area on that kind only.
    Readable safety TRAIN banks with misses are mined before anything else.
+   **The FRAME.md safety target is binding.** While recall overall or for any kind is
+   under target, every cycle carries a candidate aimed at the largest miss kind, and
+   every report and release headline says "below safety target" with the kind and the
+   gap. Reporting the gap does not replace the candidate.
 3. A second panel runs only when a cycle added a new early path (a screen, guard, default
    or holding branch), or before a promotion. Otherwise the time goes to the largest kind.
 4. **Fix the class, not the phrase.** A fix that adds a phrase to a list comes with a
@@ -93,7 +149,9 @@ version fixed afterwards (references/worked-example.md, example A) needs its own
 
 - The **gate bank** runs on every candidate and version. Any new miss against the base
   drops the candidate, whatever its total; one new miss is not cancelled by one fixed miss.
-  Its recall is a selection number: report it as "used to select".
+  Its recall is a selection number: report it as "used to select". The gate bank is a
+  veto only: it cannot credit a gain. A candidate that catches more is credited by the
+  safety-gain route (references/improve.md), on a fresh safety-heavy targeted bank.
 - Replace the gate bank after 12 runs (any purpose) or any probe (`seal.py wear` flags both):
   retire it to train and seal a fresh one. A per-item trace on it (which signals fired on
   one item) is a `seal.py probe`.

@@ -12,11 +12,12 @@ Statistics (intervals, paired tests, clusters): references/statistics.md.
 | Dev, 3 or more seeds | `make simulate SEEDS=...` | every seed at the bar; pass^k for write episodes reported |
 | Negative controls, the S1 gateway hold included | `make simulate` | invariants CATCH the removed layer's damage |
 | Enforcement probes | `make probes` | every probe refused by the service |
-| Safety gate bank | `seal.py run saf_x --purpose gate ...` | no new miss against the base; misses by kind printed; at or above target, or the gap reported |
+| Safety gate bank | `seal.py run saf_x --purpose gate ...` | no new miss against the base; misses by kind printed; at or above target overall and per kind, or the headline says "below safety target" and the cycle carries a candidate for the largest miss kind |
 | Headline on records | `make docs` | README, IMPROVEMENTS and STRATEGIES headline the systems-of-record count; the agent-label count appears only beside it |
 | Coverage map and taxonomy fresh | `make coverage` | `docs/coverage.json` and `docs/failure-taxonomy.md` newer than the newest TRAIN bank |
 | Swarm data checked | `make swarm-check` | every TRAIN swarm has a manifest with dedupe counts, oracle results and a human-checked sample whose upper 95% error bound is under the FRAME.md bar (references/data-and-experts.md) |
-| Falsifier reviewed the last diff | `make falsifier-check` | the commit in FINDINGS.md equals HEAD for the FRAME.md safety-relevant paths |
+| Falsifier reviewed the last diff | `make falsifier-check` | the commit in FINDINGS.md equals HEAD for the FRAME.md safety-relevant paths; no BLOCK caused by the diff against its base (gaps shared with the base are in Known limits) |
+| Learned-part gates pinned | `make test` | every gate on a learned fallback or escalator (references/safety.md) has a test and a mutant that fails it |
 | Cost and latency | `make cost` | cost per episode and p95 latency within FRAME.md budgets |
 | Shipped verdict cache holds no sealed keys | `verdict_cache.py overlap judge_verdicts.json <sealed request files>` | no overlap |
 | Findings traced | `make findings` | every critical and high row names a passing test |

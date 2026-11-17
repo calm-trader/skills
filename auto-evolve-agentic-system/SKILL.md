@@ -28,7 +28,7 @@ forward); never restart from V1 without porting what the earlier run learned.
 | 0 FRAME | nevers, exactly-onces, always-reach-a-person; invariants; metric on systems of record; expert panel split into seed and sealed sides; owner-signed safety target; budgets; day-one basics: CI, off switch, owners | FRAME.md reviewed | references/frame-and-build.md, data-and-experts.md; safety words (must-escalate, must-refuse, irreversible effect, harm signal): safety.md |
 | 1 BUILD | lean path; rules enforced inside tools; deterministic simulator; probes; negative controls; first writer swarm as TRAIN | all gates green | references/frame-and-build.md, gates.md |
 | 2 SEAL | banks from at least 3 writer set-ups, each with a manifest and a look budget, sealed before any result | `seal.py statement` clean | references/data-discipline.md |
-| 3 SAFETY | red team, panel, falsifier; rule S1; then aim at the largest miss kind | safety gate at target, or the gap reported | references/safety.md |
+| 3 SAFETY | red team, panel, falsifier; rule S1; then aim at the largest miss kind | safety gate at target, or each kind under target named in the headline and targeted by a candidate | references/safety.md |
 | 4 IMPROVE | swarm data → error analysis → coverage → visibility → candidates → keep → confirm → prune | stop rule | references/improve.md, statistics.md |
 | 5 CLAIM | falsify the last diff; one budgeted holdout look; fair comparison if another system exists | numbers in the ledger | references/compare.md |
 | 6 READINESS | independent review; staged plan | READINESS.md | references/readiness.md |
@@ -81,16 +81,31 @@ forward); never restart from V1 without porting what the earlier run learned.
   across cycles; distractors not worse) of a fresh targeted bank written after the
   candidate froze, by a writer its builder never saw, run once (one bank per candidate
   per cycle). Reported as "kept on mechanism", never as a SELECT win.
+- **Keep, on safety gain**: for an add-only candidate (it can only raise risk: add an
+  escalation, hold or hand-off) aimed at a risk kind below the FRAME target. Judged on a
+  fresh safety-heavy targeted bank, run once: a reliable gain in caught cases of that
+  kind, no newly missed case of any kind, false alarms within the FRAME cap there and on
+  SELECT's non-risk episodes. SELECT pass totals are reported, not a keep test. Reported as "kept on safety gain".
+- A card's route is exactly `proven`, `mechanism` or `safety-gain`. A card that names any
+  other route is invalid and is not scored. The safety gate only vetoes; it keeps nothing.
 - **Drop**: anything else, with the reason; "re-test when a bank can see it" if `--visible`
-  said SELECT was blind.
+  said SELECT was blind. An add-only safety candidate with zero losses is never dropped as
+  noise on general SELECT: it gets "re-test on a targeted safety bank".
 - **Prune**: before a cycle's last version, switch each kept part off in turn on retired
   CONFIRM banks; remove any part whose removal changes nothing or helps a segment.
 - The cycle's claim is the CONFIRM result for the whole stack, never a SELECT number. The
   head must also be not worse than the base on CONFIRM in every segment, or the step
-  responsible is found by bisection and reverted, proven or not.
+  responsible is found by bisection and reverted, proven or not. A not-worse fail with
+  zero episodes lost is lack of power, not harm: add episodes, report it, never revert
+  on it (references/statistics.md).
 
 ## Priority
-1. Safety before accuracy; the largest safety miss kind before another panel.
+1. Safety before accuracy; the largest safety miss kind before another panel. The FRAME
+   safety target binds: while any risk kind reads "below target" or "not shown" (only
+   "met" releases it), every cycle carries a candidate
+   for the largest miss kind (or writes why not), visibility is checked per risk kind
+   before SELECT, and the release headline says "below safety target". A miss does not
+   block a release by itself; hiding it or leaving it untargeted does.
 2. Fresh swarm data and error analysis before a classifier rung, tuning or judges.
 3. Rank failure classes by share x fix rate / cost; the largest cell holds a candidate
    or is written "not addressed, because ..." (references/improve.md step 2); if no bank
@@ -101,7 +116,11 @@ Stop a cycle when: the budget is spent; or two cycles in a row show no reliable 
 gain *and* no unaddressed cell holds more than the FRAME.md share of TRAIN failures; or
 the remaining failures need a product decision; or a needed sealed bank is burned or spent
 and no fresh writer exists. A round count alone never stops a cycle while a
-kept-on-mechanism candidate, a blind cell or an unread fresh TRAIN bank is waiting.
+kept-on-mechanism candidate, a blind cell, an unread fresh TRAIN bank or a risk kind
+under target with no candidate tried is waiting. Track hours per phase in CYCLES.md.
+Safety round 0 has its own time budget: after two rule rounds that each open new gaps,
+or at about half the whole budget, stop patching and switch to fresh-writer data plus a
+learned add-only escalator (references/safety.md, "Fix rounds: superset, stop, switch").
 
 ## Roles, scripts, reports
 Roles (builder, expert and stakeholder panels, writer swarm, writers, domain owner, red
@@ -109,7 +128,9 @@ teamers, falsifier, reviewer, advisor, operator who owns the off switch), who re
 and the words per agent kind: references/runtime-adapters.md. Scripts, standard library
 only (copy into `tools/` and commit; run as `python3 tools/<script>.py`): `seal.py`
 (ledger, looks, probes, manifests, wear, statement); `noise.py` (cluster-aware intervals,
-paired and family tests, `--not-worse`, `--visible`, `--mde`); `compare.py`; `drift.py`;
+paired and family tests, `--not-worse`, `--visible`, `--mde`); `compare.py` (with a
+safety class, pass `--catch-*`, `--alarm-*`, `--kinds` and `--target-*` so the headline
+carries caught risk and false alarms); `drift.py`;
 `verdict_cache.py`. Tests: `python3 -m unittest discover -s scripts -p 'test_*.py'`.
 FRAME.md, FINDINGS.md, IMPROVEMENTS.md, STRATEGIES.md, CYCLES.md, READINESS.md:
 references/report-templates.md; prompts: references/prompts.md; mistakes:

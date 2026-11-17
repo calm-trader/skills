@@ -13,7 +13,8 @@ exist and work, rather than discovering they do not:
 - a CI config that runs `make check` on every change;
 - a tested switch that turns learned parts off, and one that sends everything to people;
 - named owners: domain owner, each queue's owner, the operator (or "not named");
-- an owner-signed safety target and false-alarm ceiling;
+- an owner-signed safety target (overall and per miss kind, binding on every cycle) and
+  false-alarm ceiling;
 - cost and latency budgets.
 
 ## Independent review
@@ -32,7 +33,7 @@ the claims, the sealed paths it must not open, and a scratch folder.
 
 | Section | What it holds |
 |---|---|
-| Verdict | the furthest stage it is ready for, and the single most important reason it is not ready for the next |
+| Verdict | the furthest stage it is ready for, and the single most important reason it is not ready for the next; "below safety target" with the kind and the gap in the first line while safety recall, overall or for any kind, is under the FRAME.md target |
 | What the numbers mean | each claimed number in plain words: which bank, which writer, how many looks, records or strict, episodes and phrasings, interval |
 | Replacements | each mock or in-process part (stores, ledger, idempotency store, queues, identity, clock, sender) and what replaces it in production, with its owner |
 | Handoff queues | each queue: consumer, owner, response-time target, paging for urgent items, measured time-to-human (or "not measured") |
@@ -58,7 +59,9 @@ placeholder until the owner replaces it; say so in the table.
 ## Evidence each stage needs
 
 - **Before shadow**: blockers closed with tests; safety bank results against an
-  owner-signed target; a holdout with a look budget, built and scored outside the
+  owner-signed target, overall and per miss kind, with "below safety target" stated where
+  true and the owner's sign-off on promoting with that gap; a test and a mutant for every
+  gate on a learned fallback or escalator (references/safety.md); a holdout with a look budget, built and scored outside the
   builder's repository, with labels from two people and their agreement; `seal.py
   statement` pasted, not paraphrased; the shadow plan (sample size, duration, who
   adjudicates, how simulated and shadow results are compared per segment).

@@ -53,6 +53,8 @@ Fewer phrasings cannot show "not worse": one phrasing flipping is then too large
 MARGIN is a whole number of episodes (10) or a share with % (1%); above 2% of the
 episodes it needs --wide-margin. With --segments every segment is tested too, with the
 margin pro rata, and any failure fails. --of K tests at 0.025/K. Exit 1 when it fails.
+A failure with no episode lost is printed "FAIL, 0 lost: underpowered (power, not harm)":
+the bank is too small to show not-worse there, and nothing got worse on it.
 --cells CELLS --cell NAME tests the gain on that cell's episodes only and --not-worse on
 all the others (the mechanism route's targeted bank). It needs --ledger L --cycle N, the
 open cycle from `seal.py cycle open --of K`: every threshold is 0.05 / K / 2^N, each test
@@ -574,7 +576,7 @@ def cmd_paired_maps(opts: dict) -> None:
     if opts.get("cycle"):
         tag = hashlib.sha256(json.dumps(sorted(cand.items())).encode()).hexdigest()[:16]
         k, used = seal_module().use_cycle(Path(opts["ledger"]).resolve(), opts["cycle"], tag)
-        print(f"cycle {opts['cycle']}: mechanism test {used} of {k} (recorded in the ledger)")
+        print(f"cycle {opts['cycle']}: mechanism or safety-gain test {used} of {k} (recorded in the ledger)")
     spend = 2 ** opts.get("cycle", 0)
     thr = ALPHA / k / spend
     ids = list(base)
@@ -586,7 +588,8 @@ def cmd_paired_maps(opts: dict) -> None:
         if not ids:
             fail(f"--cell {opts['cell']}: no episode of the maps is in that cell")
         print(f"target cell {opts['cell']}: {len(ids)} episodes; the other {len(rest)} are "
-              "checked with --not-worse")
+              + ("checked with --not-worse" if "not_worse" in opts else
+                 "not tested (no --not-worse given)"))
     nw_ids = rest if opts.get("cell") else ids
     margin = (margin_episodes(opts["not_worse"], len(nw_ids), opts.get("wide_margin", False))
               if "not_worse" in opts else None)
@@ -628,8 +631,11 @@ def cmd_paired_maps(opts: dict) -> None:
         for name, pids in parts:
             m = margin * len(pids) / len(nw_ids)
             nw = not_worse(base, cand, clusters, m, pids, alpha=alpha)
+            lost = sum(1 for i in pids if base[i] and not cand[i])
+            end = ("PASS" if nw["ok"] else
+                   "FAIL, 0 lost: underpowered (power, not harm)" if lost == 0 else "FAIL")
             print(f"not worse ({name}), margin {m:.1f} of {len(pids)} episodes, net {nw['net']:+d}"
-                  f", one-sided threshold {alpha:.4f}: {nw['why']}: {'PASS' if nw['ok'] else 'FAIL'}")
+                  f", one-sided threshold {alpha:.4f}: {nw['why']}: {end}")
             failed = failed or not nw["ok"]
         if failed:
             raise SystemExit(1)

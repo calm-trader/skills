@@ -25,10 +25,16 @@
    actions are broken down by effect type (payment, write, send, delete, merge ...).
 4. **Safety target, signed.** With the domain owner, set a safety recall target and a
    false-alarm ceiling, and size the safety bank for them (`noise.py --need RATE`: zero
-   misses in 40 only shows the miss rate is below 7.2%). Without an owner, write "no
-   domain owner: targets set by the builder" at the top of FRAME.md.
+   misses in 40 only shows the miss rate is below 7.2%). Set the recall target overall
+   and per miss kind. Without an owner, write "no domain owner: targets set by the
+   builder" at the top of FRAME.md.
+   **The target is binding, not a note.** While recall overall or for any kind is under
+   target, every cycle must carry a candidate aimed at the largest miss kind, and every
+   report and the release headline say "below safety target" (references/safety.md, Aim
+   after round 0). Missing the target does not block a release by itself; hiding it or
+   leaving it untargeted does.
 5. **Budgets.** Time and spend per track (accuracy, safety, operations; 60/30/10 after
-   round 0 is a starting point), K and the spike cap, look budget per sealed bank, cost
+   round 0 is a starting point), a time budget for round 0 itself, K and the spike cap, look budget per sealed bank, cost
    per episode, p95 latency, model tier per role, wall clock. No fixed round count
    (SKILL.md, Stop rule).
 6. **Settings.** Write these as FRAME.md settings, starting from the defaults; change
@@ -52,6 +58,8 @@
    | swarm near-duplicate threshold / human sample size / error bar (upper 95% bound) | 0.8 / 150 / 5% |
    | drift alarm (PSI) | 0.2 |
    | safety-relevant paths (for the falsifier-commit check) | list them |
+   | safety recall target: overall / per miss kind | owner-signed; binding |
+   | rule fix rounds that open new gaps before the switch to data plus a learned add-only escalator | 2 |
 
 7. **Day-one basics** (the readiness review must not be the first to find these):
    - a CI config that runs `make check` on every change (a Makefile comment is not CI);
@@ -109,7 +117,8 @@
    and controls only, never a sealed bank. `check` adds the ledger, findings, cache and
    docs checks.
 8. **Falsifier** review of the simulator before the agent exists, then of V1. Fix. Then
-   "falsify the fixes".
+   "falsify the fixes", with fixes written as supersets and the stopping and switch rules
+   of references/safety.md (Fix rounds).
 9. **First swarm.** Seed-side expert cases become dev; the first writer swarm, with its
    dedupe, oracle check and human-checked sample, is sealed as role `train`
    (references/data-and-experts.md).

@@ -11,6 +11,12 @@
   version commit.
 - The headline is the systems-of-record count, with its bank's writer, episodes and
   phrasings. The agent-label ("strict") count sits beside it as a diagnostic.
+- While any risk kind is under the FRAME.md safety target, the headline's next line is
+  "below safety target: {kind}, {caught} of {n} caught against a target of {T}" for each
+  such kind, with the candidate that aimed at it. A miss does not block a release by
+  itself; a headline that leaves it out is a defect. Never write "level overall" over a
+  reliable loss in caught cases.
+- Each cycle report gives hours and spend per phase.
 - The data-discipline section is `seal.py statement --markdown` pasted, never prose.
 - Each report has "What these numbers do not measure": real users, real systems,
   human-agreed labels, live judge, seeds beyond one, a human expert panel, a
@@ -25,7 +31,7 @@
 ```markdown
 # V{n} improvements
 
-V{n} adds **{strategy}** to [V{n-1}](../{prev}/), kept **{proven | on mechanism}**.
+V{n} adds **{strategy}** to [V{n-1}](../{prev}/), kept **{proven | on mechanism | on safety gain}**.
 [STRATEGIES.md](STRATEGIES.md) compares all versions.
 
 ## What it does
@@ -39,8 +45,10 @@ happens when it abstains. The root cause it addresses, from the candidate card.}
 | Agent-label count, same bank (diagnostic) | | |
 | Pooled SELECT ({banks}, {set-ups} set-ups): B, C, net, cluster-aware interval | | |
 | Targeted bank (mechanism route only) | | |
+| Targeted safety bank (safety-gain route only): caught in the target kind, newly missed, false alarms against the cap | | |
 | CONFIRM (cycle head only) | | |
 | Safety gate: recall, misses by largest kind, new misses, false alarms | | |
+| Caught by risk kind against the FRAME.md target (overall and per kind); kinds under target | | |
 | By segment: success, correct handoff, wrong action | | |
 | Wrong actions by effect type and severity | | |
 | TRAIN: gained, lost | | |
@@ -63,7 +71,8 @@ sample [ ].
 were read, which only counted.}
 
 ## Known limits
-{New limits this version adds; link to the previous list.}
+{New limits this version adds; link to the previous list. Safety gaps that every version
+shares (found in a fix round, not caused by any diff) are listed here with their kind.}
 ```
 
 ## FINDINGS.md
@@ -72,6 +81,11 @@ were read, which only counted.}
 
 Plus one line: `Falsifier reviewed commit: {sha} on {date}` (read by `make falsifier-check`).
 
+Plus one row per safety fix round (references/safety.md, Fix rounds):
+
+| Round | Base commit | BLOCKs caused by the diff | BLOCKs shared with the base | Fix written as a superset (y/n) | Hours | Rule that ended the loop (clean pass, switch, budget) |
+|---|---|---|---|---|---|---|
+
 ## TOURNAMENT.md, CYCLES.md, READINESS.md
 TOURNAMENT.md per cycle: references/improve.md (Report). CYCLES.md: references/continuous.md.
 READINESS.md: references/readiness.md.
@@ -79,12 +93,14 @@ READINESS.md: references/readiness.md.
 ## STRATEGIES.md (latest version)
 
 Sections, in order:
-1. First line: "Ready for {stage}" or "Not ready for {stage}: {reason}".
+1. First line: "Ready for {stage}" or "Not ready for {stage}: {reason}". Second line,
+   while it is true: "Below safety target: {kind}, {caught} of {n} against {T}".
 2. Intro: why the loop started, the baseline numbers.
-3. Strategy table: Version | Strategy | Route (proven, mechanism) | Proven in | Folder.
+3. Strategy table: Version | Strategy | Route (proven, mechanism, safety-gain) | Proven in | Folder.
 4. Results table, rows: each holdout (records count, then label count), final bank,
    pooled SELECT, CONFIRM per cycle, TRAIN, dev, safety gate and final safety bank, false
-   alarms, tests, corpus replays; columns: versions. Each bank's writer set-up, episodes
+   alarms, caught by risk kind against the target, tests, corpus replays, hours per
+   phase; columns: versions. Each bank's writer set-up, episodes
    and phrasings in its row label.
 5. The whole journey:
    ```markdown
@@ -93,7 +109,9 @@ Sections, in order:
    ```
 6. "What each strategy did, honestly": one bullet per version, the number, inside or
    outside the noise, what did not work, what the ablation removed.
-7. Fair comparison (if another system or run exists), from `compare.py --markdown`:
+7. Fair comparison (if another system or run exists), from `compare.py --markdown`; when the
+   system has a safety class, run it with `--catch-*`, `--alarm-*`, `--kinds` and `--target-*`
+   and put the caught-risk and false-alarm lines next to the pass line:
    ```markdown
    | Bank (writer set-up) | Episodes | Phrasings | Baseline | A | B | B (only A) | C (only B) | Net | Interval | Verdict |
    |---|---|---|---|---|---|---|---|---|---|---|

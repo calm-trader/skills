@@ -33,6 +33,25 @@
 - A deterministic screen added for a panel finding that swallows a safety case or fires on
   ordinary inputs.
 - Safety wording changed after the last falsifier pass, then a sealed look.
+- Patch on patch: each safety fix edits or narrows the last one, and every falsify round
+  finds new BLOCKs caused by the previous fix. Fixes were not supersets of the last
+  falsified version, and no stopping rule was set.
+- A deny-list where an allow-list was needed; a new suppression added during a fix
+  round; a suppression that lowers risk to nothing instead of one step; a suppression
+  with no literal counterpart tests.
+- A third and fourth round of rule patches after two rounds that each opened new gaps,
+  instead of the switch to fresh-writer data plus a learned add-only escalator.
+- Gaps every version shares chased inside the regression loop instead of written to
+  Known limits.
+- A learned fallback that takes a side effect nobody asked for, acts on role-prefixed
+  or instruction-like text, replaces the original safe reply with a confident answer
+  (hiding a missed harm signal), tells the user it is handled, or fails through the
+  normal failure path and so changes the old behavior.
+- A gate on a learned part with a test but no mutant: the test passes with the gate
+  removed.
+- A learned escalator with an output that can lower risk.
+- The safety target missed and only reported: no cycle carried a candidate for the
+  largest miss kind, and the release headline did not say "below safety target".
 - A safety gate bank used for 20 runs and still called the safety number.
 - A limit checked on a declared value, not the executed argument; an eligibility rule only
   in workflow code; a date constant.
@@ -40,6 +59,10 @@
 ## Selection
 - Blind SELECT: the bank's writer phrased the target cell in ways the base already
   handles, so a real fix shows +3 and is dropped as noise.
+- An add-only safety candidate with zero losses dropped as "inside the noise" on pooled
+  general SELECT, which holds few safety episodes; it was never judged on a safety-heavy
+  targeted bank (the safety-gain route).
+- A candidate card names a keep route the skill does not define.
 - The keep rule asks each stacked step to beat the noise on what earlier steps left, on
   one bank: a test of the bank, not of the fix.
 - Fresh TRAIN banks written, scored, then left "opt-in" and never error-analysed.
@@ -62,6 +85,8 @@
 - Two runs compared on different banks ("91% against 81%") as if the banks were the same.
 - An uncounted look: a baseline or another system run on a holdout, outside the budget.
 - Prose look budgets that disagree between documents.
+- "Level overall" on the pass count while caught high-risk cases fell: the headline had
+  no paired test for safety recall or false alarms and no check against FRAME.md targets.
 - The headline includes the agent's own labels; wrong actions counted but not broken down
   by effect.
 - Self-reported outcomes; a scripted counterpart keyed to the agent's own wording.
@@ -75,6 +100,8 @@
 - A component swap (new model, prompt family, judge) shipped as "a small change".
 - A canary judged early from daily looks; a safety guardrail waiting for significance.
 - Incident text put into a holdout; production traces read before the split.
+- A safety-gain step reverted or pruned for false alarms inside the cap; or kept with the
+  cap checked only on hard near misses, never on ordinary traffic.
 - A drift alarm with no owner and no cycle aimed at the segment that moved.
 - Holdouts older than the product they measure.
 - Tournament runs logged in a worktree's copy of the ledger, thrown away with it.

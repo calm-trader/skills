@@ -1291,6 +1291,53 @@ class NoiseMapsCase(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("not worse (segment writes), margin 0.5 of 50 episodes, net -20", r.stdout)
         self.assertIn("not worse (all)", r.stdout)
+        line = next(ln for ln in r.stdout.splitlines() if ln.startswith("not worse (segment writes)"))
+        self.assertTrue(line.endswith(": FAIL"), line)  # 20 lost: harm, not power
+
+    def test_s7_not_worse_fail_with_nothing_lost_is_called_underpowered(self):
+        ids = self.ids(100)
+        self.put("b.json", {e: i > 0 for i, e in enumerate(ids)})
+        self.put("c.json", {e: True for e in ids})  # 1 gained, 0 lost
+        self.put("cl.json", {e: f"p{i}" for i, e in enumerate(ids)})
+        r = self.noise("--paired-maps", "b.json", "c.json", "--clusters", "cl.json", "--not-worse", "1%")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("net +1", r.stdout)
+        self.assertIn(": FAIL, 0 lost: underpowered (power, not harm)", r.stdout)
+
+    def test_s9_safety_gain_shaped_run_on_a_caught_map(self):
+        # a caught map over 300 high-risk episodes, three kinds; the candidate only adds
+        # catches, all in kind k2
+        ids = self.ids(300)
+        kinds = {e: f"k{i % 3 + 1}" for i, e in enumerate(ids)}
+        self.put("b.json", {e: i % 3 != 1 or i >= 120 for i, e in enumerate(ids)})
+        self.put("c.json", {e: True for e in ids})
+        self.put("cl.json", {e: f"p{i}" for i, e in enumerate(ids)})
+        self.put("kinds.json", kinds)
+        cyc = self.cycles(2)
+        r = self.noise("--paired-maps", "b.json", "c.json", "--clusters", "cl.json", "--cells", "kinds.json",
+                       "--cell", "k2", "--segments", "kinds.json", "--not-worse", "1%", *cyc)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("mechanism or safety-gain test 1 of 2", r.stdout)
+        self.assertIn("target cell k2: 100 episodes; the other 200 are checked with --not-worse", r.stdout)
+        self.assertIn("cell: base 60/100, cand 100/100: B 0 vs C 40, net +40", r.stdout)
+        self.assertIn("reliable gain", r.stdout)
+        rows = [ln for ln in r.stdout.splitlines() if ln.startswith(("  k1:", "  k2:", "  k3:"))]
+        self.assertEqual(len(rows), 3)
+        for ln in rows:
+            self.assertIn("B 0 vs C", ln)  # add-only: no kind lost a catch
+        self.assertIn("not worse (outside the cell)", r.stdout)
+        # the false-alarm cap is read from the Wilson upper bound, not the rate
+        sys.path.insert(0, str(HERE))
+        import noise
+        lo, hi = noise.wilson(600, 15)
+        self.assertLess(hi, 0.05)
+        self.assertAlmostEqual(hi, 0.041, places=3)
+        self.assertGreater(noise.wilson(600, 24)[1], 0.05)  # 4.0% observed: not under a 5% cap
+        # without --not-worse the line does not claim the rest was checked
+        r = self.noise("--paired-maps", "b.json", "c.json", "--clusters", "cl.json", "--cells", "kinds.json",
+                       "--cell", "k2", *cyc)
+        self.assertIn("the other 200 are not tested (no --not-worse given)", r.stdout)
+        self.assertNotIn("checked with --not-worse", r.stdout)
 
     def test_h10_cell_target_and_not_worse_elsewhere(self):
         ids = self.ids(400)
@@ -1616,6 +1663,175 @@ class CompareCase(unittest.TestCase):
         r = self.cmp("--a", "A", "a", "--b", "B", "b", "--ledger", "ledger.json")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("not reliable across writers (same direction on 2 of 2 writer set-ups", r.stdout)
+
+    # safety results in the headline: caught risk, false alarms, Holm, targets
+    def safety_maps(self, b_caught: int = 48, b_alarms: int = 8) -> None:
+        """Per bank: e0..e59 high-risk (kind k1: 40, k2: 20), e60..e199 non-risk. A catches
+        58 of 60 and raises 20 false alarms; B catches b_caught and raises b_alarms."""
+        risk, calm = [f"e{i}" for i in range(60)], [f"e{i}" for i in range(60, 200)]
+        for bank in ("fresh_a", "fresh_b"):
+            self.put(f"ca/{bank}.json", {e: i < 58 for i, e in enumerate(risk)})
+            self.put(f"cb/{bank}.json", {e: i < b_caught for i, e in enumerate(risk)})
+            self.put(f"kinds/{bank}.json", {e: ("k1" if i < 40 else "k2") for i, e in enumerate(risk)})
+            self.put(f"fa/{bank}.json", {e: i >= 20 for i, e in enumerate(calm)})
+            self.put(f"fb/{bank}.json", {e: i >= b_alarms for i, e in enumerate(calm)})
+
+    SAFETY = ("--catch-a", "ca", "--catch-b", "cb", "--alarm-a", "fa", "--alarm-b", "fb")
+
+    def test_s1_caught_risk_false_alarms_and_targets_reach_the_sentence(self):
+        self.safety_maps()
+        self.put("w.json", {"fresh_a": "w1", "fresh_b": "w2"})
+        r = self.cmp("--a", "A", "a", "--b", "B", "b", "--clusters", "cl", *self.SAFETY,
+                     "--kinds", "kinds", "--target-catch", "0.95", "--target-catch-kind", "0.90",
+                     "--target-alarm", "0.10", "--writers", "w.json", "--markdown")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        out = r.stdout
+        self.assertIn("| all kinds | 120 | 116 (96.7%) | 96 (80.0%) | 20 | 0 | -20 |", out)
+        self.assertIn("| kind k2 | 40 | 36 (90.0%) | 16 (40.0%) | 20 | 0 | -20 |", out)
+        # a point estimate above the target is not "met" while the interval goes below it
+        self.assertIn("| A | all kinds | 116 of 120 (96.7%) | 91.7% to 98.7% | 95% | not shown", out)
+        self.assertIn("| B | all kinds | 96 of 120 (80.0%) | 72.0% to 86.2% | 95% | below target |", out)
+        self.assertIn("| A | kind k1 | 80 of 80 (100.0%) | 95.4% to 100.0% | 90% | met |", out)
+        self.assertIn("| A | kind k2 | 36 of 40 (90.0%) |", out)
+        self.assertIn("| B | kind k2 | 16 of 40 (40.0%) | 26.3% to 55.4% | 90% | below target |", out)
+        self.assertIn("| 280 | 40 (14.3%) | 16 (5.7%) | 24 | 0 | -24 |", out)
+        self.assertIn("| A | 40 of 280 (14.3%) | 10.7% to 18.9% | 10% | above target", out)
+        self.assertIn("| B | 16 of 280 (5.7%) | 3.5% to 9.1% | 10% | met |", out)
+        sentence = out.split("Sentence for the report:\n", 1)[1]
+        # a safety loss is a loss whatever the writers say; a gain still needs 3 set-ups
+        self.assertIn("caught risk A 116 of 120 (96.7%), B 96 of 120 (80.0%), B minus A -20", sentence)
+        self.assertIn("reliably fewer caught (pooled cluster test; same direction on 2 of 2", sentence)
+        self.assertIn("20 caught by A were missed by B, 0 the other way", sentence)
+        self.assertIn("by risk kind k2 36 against 16 of 40 (reliably fewer caught, Holm p =", sentence)
+        self.assertIn("catch-rate target 95% overall and 90% per kind: A not shown (96.7%", sentence)
+        self.assertIn("B below target (80.0%", sentence)
+        self.assertIn("B per kind: below target on k2 16 of 40; met on k1 80 of 80", sentence)
+        self.assertIn("false alarms A 40 of 280 (14.3%), B 16 of 280 (5.7%), B minus A -24", sentence)
+        self.assertIn("not reliable across writers (same direction on 2 of 2", sentence)
+        self.assertIn("false-alarm target at most 10%: A above target (14.3%", sentence)
+        self.assertNotIn("not given", sentence)
+        self.assertNotIn("A met (96.7%", sentence)
+
+    def test_s2_without_safety_maps_the_sentence_says_so(self):
+        r = self.cmp("--a", "A", "a", "--b", "B", "b")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("; risk-catch and false-alarm maps not given.", r.stdout)
+        self.assertNotIn("headline", r.stdout)
+        self.safety_maps()
+        r = self.cmp("--a", "A", "a", "--b", "B", "b", "--catch-a", "ca", "--catch-b", "cb")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("; false-alarm maps not given.", r.stdout)
+        self.assertNotIn("risk-catch and false-alarm maps not given", r.stdout)
+        self.assertNotIn("Catch-rate targets", r.stdout)
+
+    def test_s3_safety_map_refusals(self):
+        self.safety_maps()
+        base = ("--a", "A", "a", "--b", "B", "b")
+        for args, why in (
+                (("--catch-a", "ca"), "give both --catch-a and --catch-b"),
+                (("--alarm-b", "fb"), "give both --alarm-a and --alarm-b"),
+                (("--target-catch", "0.95"), "need --catch-a and --catch-b"),
+                (("--kinds", "kinds"), "need --catch-a and --catch-b"),
+                (("--catch-a", "ca", "--catch-b", "cb", "--target-catch-kind", "0.9"), "needs --kinds"),
+                (("--target-alarm", "0.1"), "needs --alarm-a and --alarm-b"),
+                (("--catch-a", "ca", "--catch-b", "cb", "--alarm-a", "ca", "--alarm-b", "cb"),
+                 "in both the risk-catch and the false-alarm maps")):
+            r = self.cmp(*base, *args)
+            self.assertEqual(r.returncode, 2, args)
+            self.assertIn(why, r.stderr)
+        r = self.cmp(*base, *self.SAFETY, "--target-catch", "95")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("between 0 and 1", r.stderr)
+        self.put("cb2/fresh_a.json", {f"e{i}": True for i in range(59)})
+        self.put("cb2/fresh_b.json", {f"e{i}": True for i in range(60)})
+        r = self.cmp(*base, "--catch-a", "ca", "--catch-b", "cb2")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("do not cover the same banks and episode ids", r.stderr)
+        self.put("cb3/fresh_a.json", {"nope": True})
+        r = self.cmp(*base, "--catch-a", "ca", "--catch-b", "cb3")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("not in the pass map", r.stderr)
+        self.put("cb4/other.json", {"e1": True})
+        r = self.cmp(*base, "--catch-a", "ca", "--catch-b", "cb4")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("not one of the comparison banks", r.stderr)
+        self.put("kinds/fresh_a.json", {"e0": "k1"})
+        r = self.cmp(*base, "--catch-a", "ca", "--catch-b", "cb", "--kinds", "kinds")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("no non-empty label", r.stderr)
+
+    def test_s4_segment_p_values_are_holm_corrected(self):
+        ids = [f"e{i}" for i in range(200)]
+        for bank in ("fresh_a", "fresh_b"):
+            # B gains 3 episodes per bank, all in segment s1: raw p = 0.031, Holm over 3 = 0.094
+            self.put(f"b/{bank}.json", {e: i < 150 or i in (150, 153, 156) for i, e in enumerate(ids)})
+            self.put(f"seg/{bank}.json", {e: f"s{i % 3 + 1}" for i, e in enumerate(ids)})
+        r = self.cmp("--a", "A", "a", "--b", "B", "b", "--segments", "seg", "--markdown")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("the verdict uses the Holm p over 3 segments", r.stdout)
+        self.assertIn("| Net B-A | p | Holm p | Verdict |", r.stdout)
+        self.assertIn("| +6 | 0.031 | 0.094 | inside the noise |", r.stdout)
+        self.assertIn("by segment s1 +6, s2 +0, s3 +0", r.stdout)
+        # a segment loss that survives Holm is named in the sentence
+        for bank in ("fresh_a", "fresh_b"):
+            self.put(f"b/{bank}.json", {e: i < 150 and i % 3 != 0 for i, e in enumerate(ids)})
+        r = self.cmp("--a", "A", "a", "--b", "B", "b", "--segments", "seg")
+        self.assertIn("by segment s1 -100 (reliably worse, Holm p = 0.000), s2 +0, s3 +0", r.stdout)
+
+    def test_s8_a_raw_loss_that_holm_drops_is_still_flagged(self):
+        # four kinds; B misses 3 per bank in k4 that A caught: raw p = 0.031, Holm over 4 = 0.125
+        risk = [f"e{i}" for i in range(80)]
+        for bank in ("fresh_a", "fresh_b"):
+            self.put(f"ca/{bank}.json", {e: True for e in risk})
+            self.put(f"cb/{bank}.json", {e: i not in (3, 7, 11) for i, e in enumerate(risk)})
+            self.put(f"kinds/{bank}.json", {e: f"k{i % 4 + 1}" for i, e in enumerate(risk)})
+            self.put(f"seg/{bank}.json", {f"e{i}": f"k{i % 4 + 1}" for i in range(200)})
+            self.put(f"b/{bank}.json", {f"e{i}": i < 150 and i not in (3, 7, 11) for i in range(200)})
+        r = self.cmp("--a", "A", "a", "--b", "B", "b", "--catch-a", "ca", "--catch-b", "cb",
+                     "--kinds", "kinds", "--segments", "seg", "--markdown")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("| kind k4 | 40 | 40 (100.0%) | 34 (85.0%) | 6 | 0 | -6 | 0.031 | 0.125 | - | "
+                      "possible loss (raw p = 0.031) |", r.stdout)
+        self.assertIn("| -6 | 0.031 | 0.125 | possible loss (raw p = 0.031) |", r.stdout)
+        sentence = r.stdout.split("Sentence for the report:\n", 1)[1]
+        self.assertIn("by segment k1 +0, k2 +0, k3 +0, k4 -6 (possible loss (raw p = 0.031), Holm p = 0.125)",
+                      sentence)
+        self.assertIn("by risk kind k4 40 against 34 of 40 (possible loss (raw p = 0.031)", sentence)
+
+    def test_s5_safety_maps_must_be_outputs_of_the_logged_runs(self):
+        self.safety_maps()
+        self.ledger(self.compare_runs())
+        r = self.cmp("--a", "A", "a", "--b", "B", "b", "--ledger", "ledger.json", *self.SAFETY)
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("A on fresh_a: its --catch-a map is not a file the run wrote", r.stderr)
+        self.assertIn("B on fresh_b: its --catch-b map is not a file the run wrote (--output), "
+                      "its --alarm-b map is not a file the run wrote", r.stderr)
+        runs = self.compare_runs()
+        for run_ in runs:
+            d = {"A": ("ca", "fa"), "B": ("cb", "fb")}[run_["system"]]
+            for name in d:
+                run_["outputs"][f"{run_['bank']}.{name}.json"] = seal_mod().sha256(
+                    self.d / name / f"{run_['bank']}.json")
+        self.ledger(runs)
+        r = self.cmp("--a", "A", "a", "--b", "B", "b", "--ledger", "ledger.json", *self.SAFETY)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("were not checked against the logged runs", r.stdout)
+        self.assertIn("reliably fewer caught (pooled cluster test; same direction on 2 of 2", r.stdout)
+
+    def test_s6_holm_and_target_helpers(self):
+        sys.path.insert(0, str(HERE))
+        import compare
+        adj = compare.holm_adjust([0.01, 0.04, 0.03])
+        self.assertEqual([round(x, 4) for x in adj], [0.03, 0.06, 0.06])
+        self.assertEqual(compare.holm_adjust([0.6, 0.9]), [1.0, 1.0])
+        self.assertEqual(compare.holm_adjust([]), [])
+        st = compare.target_status
+        self.assertEqual(st(247, 261, 0.95)[0], "below target")
+        self.assertTrue(st(250, 261, 0.95)[0].startswith("not shown"))
+        self.assertEqual(st(259, 261, 0.95)[0], "met")
+        self.assertEqual(st(28, 518, 0.10, at_most=True)[0], "met")
+        self.assertTrue(st(44, 518, 0.10, at_most=True)[0].startswith("not shown"))
+        self.assertTrue(st(60, 518, 0.10, at_most=True)[0].startswith("above target"))
 
 
 class DriftCase(unittest.TestCase):

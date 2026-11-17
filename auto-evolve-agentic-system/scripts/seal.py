@@ -506,7 +506,7 @@ def cmd_cycle(args: argparse.Namespace) -> None:
         n = len(cycles) + 1
         cycles.append({"n": n, "k": args.of, "at": now(), "reason": args.reason, "uses": []})
         save(path, ledger, f"cycle {n}")
-    print(f"cycle {n} opened: {args.of} mechanism test(s), each at 0.05 / {args.of} / 2^{n}. "
+    print(f"cycle {n} opened: {args.of} mechanism or safety-gain test(s), each at 0.05 / {args.of} / 2^{n}. "
           f"Pass `noise.py ... --ledger {path} --cycle {n}`.")
 
 
@@ -522,7 +522,7 @@ def use_cycle(path: Path, n: int, tag: str) -> tuple[int, int]:
                                 " (none: `seal.py cycle open --of K --reason T`)"))
         c = cycles[-1]
         if len(c["uses"]) >= c["k"]:
-            raise SystemExit(f"refused: cycle {n} registered {c['k']} mechanism test(s) and all "
+            raise SystemExit(f"refused: cycle {n} registered {c['k']} mechanism or safety-gain test(s) and all "
                              "are used; a new candidate waits for the next cycle")
         c["uses"].append({"at": now(), "candidate": tag})
         save(path, ledger, f"cycle {n} use")
@@ -1672,7 +1672,7 @@ def main(argv: list[str] | None = None) -> None:
                    ).set_defaults(fn=cmd_require_mirror)
     s = sub.add_parser("cycle", help="open the next improvement cycle (alpha spending)")
     s.add_argument("action", choices=["open"])
-    s.add_argument("--of", type=int, required=True, help="K: mechanism tests this cycle may run")
+    s.add_argument("--of", type=int, required=True, help="K: mechanism or safety-gain tests this cycle may run")
     s.add_argument("--reason", required=True)
     s.set_defaults(fn=cmd_cycle)
     s = sub.add_parser("migrate", help="start a hash chain on a ledger from an older seal.py")

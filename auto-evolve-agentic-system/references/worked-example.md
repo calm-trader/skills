@@ -69,6 +69,41 @@ runner, and the report says the holdout was looked at five times.
 Rules now: every run is a look, other systems included (`--system`); the budget lives in
 the ledger (references/data-discipline.md).
 
+**Lesson 5: a safety gain that no route could keep.** After cycle 2 the gate bank caught
+90% of must-escalate cases overall but 75% of the kind "signal arrives in a later turn";
+FRAME.md asked for 95% overall and 90% per kind. A candidate added a learned screen,
+fitted on six writer set-ups, that could only add an escalation. Its card said "route:
+proven on the safety gate". On pooled SELECT it gained 5 episodes and lost none, inside
+the noise, and was dropped. The cycle closed with the gap "reported", and the release
+read "level overall" while it caught fewer high-risk cases than a simpler rival.
+Three things were wrong. The card named a route that does not exist: the gate only
+vetoes. Pooled SELECT held 4 failing phrasings of that kind, so it could not see the fix,
+and nobody ran `--visible` per risk kind. And nothing made the cycle aim at the kind
+under target. Run again under the rules: the card says `safety-gain`; a fresh writer
+seals 200 later-turn cases over 40 phrasings plus 600 near misses; the step catches 30
+more, spread over 14 phrasings, with none newly missed in any kind, and raises 15 alarms
+on the near misses (2.5%, upper end 4.1%, against a cap of 5%); on pooled SELECT's
+non-risk episodes the upper end is under the cap too. It is
+"kept on safety gain", and until that kind reaches 90% the headline says "below safety
+target".
+Rules now: three routes, named on the card; the safety target binds every cycle; a
+zero-loss add-only safety candidate is re-tested on a targeted safety bank, never dropped
+as noise (references/improve.md steps 2 to 7).
+
+**Lesson 6: a not-worse fail with nothing lost.** On CONFIRM the cycle head gained 10 of
+300 episodes, the same direction on 2 of 2 writer set-ups. One small segment (15
+phrasings) failed `--not-worse` with 0 episodes lost and 1 gained. The team bisected for
+an hour and nearly reverted a kept step. The fail was lack of power: a pseudo-loss in a
+15-phrasing segment fails by itself. Rules now: zero lost means "not shown,
+underpowered"; add episodes from retired CONFIRM banks, report it, never revert on it;
+with 2 set-ups write "same direction on 2 of 2 (described)" (references/statistics.md).
+
+**Lesson 7: seven fix rounds in a row.** Safety round 0 took two thirds of the budget:
+each falsifier pass found one to three new gaps opened by the fix before it. Rules now:
+hours logged per phase; after two rule rounds that each open new gaps, or at half the
+budget, switch to fresh-writer data plus a learned add-only escalator
+(references/safety.md, Fix rounds).
+
 ## Example B: two coding agents, and a headline that was a different test
 
 **The systems.** Two teams built coding agents that fix failing tests and open pull
@@ -123,6 +158,10 @@ references/statistics.md).
 | One author wrote every bank; the holdouts measured that author | Expert seed cases, writer swarm, at least 3 writer set-ups (references/data-and-experts.md) |
 | Working fixes dropped on one blind SELECT bank | Pooled SELECT, `--visible`, mechanism route with a targeted bank |
 | Learned parts read only openings; most failures were in replies | Error analysis by step; coverage map; a reader per step (references/error-analysis-and-classification.md) |
+| An add-only safety candidate with 0 losses dropped as noise on general SELECT; its card named a route that does not exist | The safety-gain route on a targeted safety bank; the card's route is one of three; `--visible` per risk kind |
+| The safety target was missed and only reported; no cycle aimed at the weakest kind | The target binds: a candidate for the largest miss kind every cycle; headline "below safety target" |
+| A not-worse fail with zero losses read as harm | Zero lost is lack of power: add episodes, report, never revert on it |
+| Round 0 fix rounds ate most of the budget | Hours per phase; switch strategy after two rounds that open new gaps |
 | A gain kept that cost a new safety miss | Safety gate: no new miss against the base |
 | Safety wording changed after the falsifier's pass | Falsify the last diff |
 | An irreversible effect despite a harm signal | Rule S1 in the gateway |

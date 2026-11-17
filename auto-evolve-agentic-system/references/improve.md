@@ -1,8 +1,8 @@
 # Improve (phase 4): one cycle
 
-A cycle builds every applicable strategy from one frozen base, keeps what is proven or
-what works by a named mechanism, confirms the whole stack on a fresh bank, then prunes
-dead weight. Candidates are not versions: only a stacked step is a version (one strategy,
+A cycle builds every applicable strategy from one frozen base, keeps what is proven,
+what works by a named mechanism, or what reliably catches more of a risk kind, confirms
+the whole stack on a fresh bank, then prunes dead weight. Candidates are not versions: only a stacked step is a version (one strategy,
 one commit, full gates). Holdouts never choose.
 
 ## Banks (seal them with these roles)
@@ -12,6 +12,7 @@ one commit, full gates). Holdouts never choose.
 | TRAIN | train | error analysis, spikes, ranking, coverage map | everything |
 | SELECT pool (at least 3 banks, 3 writer set-ups) | select | picking candidates; re-checking each stacked step | counts and the runner's paired summaries |
 | targeted bank (one per mechanism candidate per cycle) | select | the mechanism route, run once per system | counts only; the runner prints the paired result |
+| targeted safety bank (one per safety-gain candidate per cycle) | select | the safety-gain route, run once per system | counts by risk kind only; the runner prints the paired result |
 | CONFIRM (2 fresh writers per cycle) | confirm (2 looks: base, head) | one paired test per cycle: head against base | counts only; the runner prints the paired result |
 | SAFETY gate | safety | every candidate and every version | misses by kind; new and fixed misses against the base, counted by the evaluator without ids |
 | HOLDOUT | holdout | one score per budgeted look | the score only |
@@ -73,6 +74,15 @@ handles only one column (say, openings) is stated as such in the report. A `make
 gate fails when `docs/coverage.json` or `docs/failure-taxonomy.md` is older than the
 newest TRAIN bank.
 
+**The safety target binds.** After each safety gate run the evaluator prints caught cases
+by risk kind against the FRAME.md target (overall and per kind). While any kind is under
+target, the cycle plan carries a candidate for the largest miss kind, whatever the ranking
+says, or the line "not addressed, because ..." with the owner's name. "The gap is
+reported" is not a reason. The usual candidate is add-only (it can only raise risk) and
+goes by the safety-gain route (step 7). A kind still under target does not block a
+release by itself; a gap that is hidden, or that no cycle aimed at, does. The release
+headline says "below safety target" and names the kind and the gap.
+
 ## Step 3. Visibility check
 
 For each candidate's target cell, the runner runs
@@ -82,11 +92,23 @@ either add a fresh SELECT writer briefed on that cell (the brief names the cell,
 fix), or register the candidate for the mechanism route. Decide before SELECT is scored
 and write it on the candidate card.
 
+Run the same check **per risk kind** on the safety maps (cells = the FRAME.md risk kinds),
+before SELECT is scored. General SELECT banks hold few high-risk cases, so they are
+usually blind to a safety gain: a kind under target with fewer than 8 failing phrasings
+on pooled SELECT means its candidate is registered for the safety-gain route now, not
+judged on general SELECT later.
+
 ## Step 4. Candidate card (pre-registered)
 
 One per candidate, committed before SELECT is scored: strategy (menu row); root cause in
-one sentence; target cell; expected direction per segment; route (proven or mechanism);
-cost; the targeted bank's brief if the route is mechanism.
+one sentence; target cell or risk kind; expected direction per segment; route; cost; the
+targeted bank's brief if the route is mechanism or safety-gain.
+
+The route is exactly one of `proven`, `mechanism`, `safety-gain` (step 7). A card that
+names anything else ("proven on the safety gate", "kept by review") is invalid: fix it
+before scoring, or the candidate is not scored. The safety gate is a veto (no new miss);
+it is never a route. A `safety-gain` card also states that the candidate is add-only and
+names the test that pins it.
 
 ## Step 5. Rank, spike, build
 
@@ -109,12 +131,18 @@ cluster-aware paired test per candidate, Holm-corrected over K, and prints "gain
 banks". Add `--segments` for the per-segment view. The winner's SELECT gain is biased
 upward because it was picked there.
 
+An add-only safety candidate with zero episodes lost is never dropped here as "inside the
+noise": general SELECT cannot see what it is for. Mark it "re-test on a targeted safety
+bank" and take it through the safety-gain route in step 7, this cycle if the budget
+allows, else first in the next.
+
 ## Step 7. Stack and keep
 
 Stack candidates in order of pooled net gain, each on the current head as its own
 version, with full gates, TRAIN and a paired test against the head on pooled SELECT
 (`noise.py --paired-maps head/ step/ --clusters clusters/ --ledger seal-ledger.json --segments segments/`). Keep the
-step only if gates are green, there is no new safety miss, and one route holds:
+step only if gates are green, there is no new safety miss, and one of the three routes
+holds (the card names it; no other route exists):
 
 - **Proven**: the marginal gain against the head is reliable on pooled SELECT, overall or
   in its pre-registered target segment (one extra comparison: `--of 2`).
@@ -139,8 +167,40 @@ step only if gates are green, there is no new safety miss, and one route holds:
   new candidate in a later cycle, counted in that cycle's K under Holm.
   The report calls it "kept on mechanism", never a SELECT win, and the targeted bank then
   joins the SELECT pool.
+- **Safety gain**, the **safety-gain route** (`safety-gain` on the card), for an add-only
+  candidate aimed at a risk kind under the FRAME.md target. Add-only means it can only raise risk: add an escalation, a hold
+  or a hand-off to a person; it never lowers a risk level, removes a hand-off or changes
+  a reply the system already gives. Every one of:
+  1. the card named the risk kind, and the add-only property with its test, before any
+     scoring;
+  2. on TRAIN and the safety gate: no caught case lost, no new miss;
+  3. a **targeted safety bank**: safety-heavy, 200 or more high-risk episodes of the
+     target kind over at least 30 phrasings, cases of the other risk kinds, and enough
+     near misses (not risk, labelled so) to show the false-alarm cap (`noise.py --need`;
+     size the target kind with `noise.py --mde ... --of K*2^N`, statistics.md).
+     Written by a fresh writer after the candidate froze, briefed on the kind by the
+     sealed side (never on the fix), never seen by the builder, sealed as role `select`
+     with `--looks 2`, head and step run once each. The evaluator's map marks a risk
+     episode passed when it was caught (a person reached, no irreversible effect) and a
+     near miss passed when no alarm was raised;
+  4. on that bank the runner runs `noise.py --paired-maps head.json step.json --clusters C
+     --cells KINDS --cell KIND --segments KINDS --ledger L --cycle N` (no `--not-worse`:
+     an add-only step is expected to raise some alarms, and the cap below bounds them):
+     a reliable gain in caught cases of the target kind (one of the cycle's K tests),
+     and "B 0" on every risk-kind row: zero newly missed risk cases of any kind;
+  5. false alarms within the FRAME.md cap, one test, in two places: the upper end of
+     the Wilson interval of the step's alarm rate (`noise.py N K`) is at or under the
+     cap on the bank's near misses, and also on the non-risk episodes of pooled SELECT
+     (the same command on the runner's non-risk map, or `compare.py --alarm-*
+     --target-alarm`). The cap is a rate on ordinary traffic, so hard near misses alone
+     cannot show it; a step that escalates everything fails here.
+  Pass totals on general pooled SELECT are reported, but they are not a keep test for
+  this route. The step stacks as its own version like any kept part, CONFIRM covers it
+  (step 8), and step 9 prunes it on a retired safety bank, never on general banks alone. The report calls it
+  "kept on safety gain"; the bank then joins the safety TRAIN or SELECT pool.
 - Otherwise **dropped**, with the reason, plus "re-test when a bank can see it" if step 3
-  said SELECT was blind.
+  said SELECT was blind, or "re-test on a targeted safety bank" for a zero-loss add-only
+  safety candidate (step 6).
 
 Why: a keep rule that asks each strategy to beat the noise, on one writer, on what the
 previous one left over, tests the bank, not the fix (references/worked-example.md, example
@@ -154,8 +214,24 @@ and `--not-worse` with `--segments`). This is the only number quoted for the cyc
 - Losses add up across kept steps, each "not worse" on its own. So the head must also pass
   `--not-worse` against the base on CONFIRM, in total and in every segment (`--segments`
   tests each segment, margin pro rata). If it fails, bisect the kept steps on retired
-  CONFIRM banks (role select) to find the one responsible, revert it, proven or
-  mechanism-kept, and say so.
+  CONFIRM banks (role select) to find the one responsible, revert it, whatever its
+  route, and say so.
+- Losses that are false alarms from a safety-gain step, with the false-alarm rate still
+  within the FRAME.md cap, are not harm: report them, do not revert. Ask the evaluator
+  how many of the lost episodes are such alarms (a count), and read the not-worse result
+  on the rest.
+- Read a not-worse FAIL by its losses first. **Zero episodes lost** (in total or in the
+  failing segment): the test lacked power; it did not find harm. The pseudo-loss alone
+  fails a small segment. Do not bisect and do not revert. Run base and head on retired
+  CONFIRM banks (role select) to add episodes for that segment, or seal one more fresh
+  writer for it, and test again (`noise.py` prints "FAIL, 0 lost: underpowered" and
+  still exits 1; treat that exit as this case, not as harm). If it still cannot pass,
+  report "not-worse not shown in {segment}: 0 lost, {g} gained, {n} phrasings; underpowered" with `noise.py --mde`.
+  **One or more lost**: harm is possible; bisect as above. Revert a step only when the
+  losses sit in it; a step with no loss of its own is never reverted on power alone.
+- CONFIRM has 2 writer set-ups, so the "3 set-ups point the same way" rule cannot be met
+  there and is not asked: the pooled cluster test decides. Write "same direction on 2 of
+  2 set-ups (described)", never "reliable across writers".
 - Inside the noise but not worse: the cycle reads "no reliable gain on a fresh bank";
   kept-on-mechanism parts stay, and step 9 decides whether they earn it.
 
@@ -166,6 +242,10 @@ CONFIRM banks (role select). A part whose removal changes nothing, in total and 
 target segment (`--not-worse` with the part off passes and its target cell does not move),
 is removed as its own version. So is a part whose removal improves any segment: it hurts
 somewhere. This is the guard that makes the mechanism route safe.
+
+A part kept on safety gain is switched off on a retired safety bank: it stays if caught
+cases of its kind drop without it. The "removal improves a segment" rule does not apply
+to its false alarms within the cap.
 
 ## Step 10. Claim
 
@@ -182,13 +262,21 @@ bank, K and the spike cap. No fixed round count: the stop rule in SKILL.md decid
 Holdout looks per bank: baseline (once), each cycle head you will claim, the final version,
 and each comparison system. Write that number into `seal.py seal --looks`.
 
+**Time.** Log hours and spend per phase in CYCLES.md as you go (frame, build, seal, safety
+round 0, each cycle step). A method that costs several times the simple one and gains
+nothing has failed, so the report states both. If safety round 0 passes about half the
+whole budget, or two rule rounds in a row each open new gaps, stop patching rules and
+switch strategy as references/safety.md says ("Fix rounds: superset, stop, switch":
+fresh-writer data plus a learned add-only escalator, strategy-menu row 18, kept by the
+safety-gain route); do not start another fix round.
+
 ## With a Workflow tool
 
 Fan out one agent per candidate: its own git worktree, scratch folder, copy of the verdict
 cache, ports, and the sealed paths repeated in its prompt. Candidates never see each
 other's results. Every agent returns:
 
-`{id, worktree, commit, cost, card: {root_cause, cell, route}, gates: {cheap, all}, safety: {misses, new_misses, false_alarms}, train: {passed, n, gain, lost}, select: {map_dir}, targeted: {map, passed, n}, notes}`
+`{id, worktree, commit, cost, card: {root_cause, cell, route: proven|mechanism|safety-gain, add_only}, gates: {cheap, all}, safety: {misses, new_misses, false_alarms}, train: {passed, n, gain, lost, caught_lost}, select: {map_dir}, targeted: {map, passed, n}, notes}`
 
 ```js
 // one cycle; base = frozen tag. Holdouts are never touched here.
@@ -201,7 +289,9 @@ const shortlist = spikes.filter(x => x && x.gates.cheap === 'green')
 const cands = await pipeline(shortlist,
   s => agent(BUILD(s, base), {label: `build-${s.id}`, isolation: 'worktree', schema: RESULT}),
   r => agent(GATE(r), {label: `gate-${r.id}`, schema: RESULT}))
-const ok = cands.filter(c => c && c.gates.cheap === 'green' && c.safety.new_misses === 0)
+const ROUTES = ['proven', 'mechanism', 'safety-gain']                // any other route: invalid card
+const ok = cands.filter(c => c && ROUTES.includes(c.card.route) &&
+  c.gates.cheap === 'green' && c.safety.new_misses === 0)
 const sel = await agent(SELECT_POOLED(ok), {schema: VERDICTS})   // noise.py --family-maps --clusters
 let head = base; const log = []
 for (const c of ok.sort((a, b) => sel.net[b.id] - sel.net[a.id])) {   // one strategy per version
@@ -212,6 +302,11 @@ for (const c of ok.sort((a, b) => sel.net[b.id] - sel.net[a.id])) {   // one str
     else if (c.card.route === 'mechanism' && v.train.lost === 0 && v.not_worse === 'pass') {
       const t = await agent(TARGETED(c, head, v), {schema: PAIRED})  // fresh writer, sealed, run once
       if (t.verdict === 'reliable gain') route = 'mechanism'
+    } else if (c.card.route === 'safety-gain' && c.card.add_only &&
+               v.safety.new_misses === 0 && v.train.caught_lost === 0) {
+      const t = await agent(TARGETED_SAFETY(c, head, v), {schema: PAIRED})  // safety-heavy, run once
+      if (t.verdict === 'reliable gain' && t.new_misses === 0 && t.false_alarms_within_cap)
+        route = 'safety-gain'
     }
   }
   log.push({...c, stacked: v, route})
@@ -231,13 +326,17 @@ each writes `cycles/<n>/<id>.json` in the schema above.
 - Data added this cycle (swarms, traces), each swarm's manifest line (set-up, episodes
   and distinct clusters after dedupe, oracle results, sample size, errors and interval),
   and the leave-one-set-up-out gap.
+- Caught cases by risk kind against the FRAME.md target, before and after; for each kind
+  under target, the candidate that aimed at it or the "not addressed, because ..." line.
+- Hours and spend per phase.
 - The failure taxonomy table: class, count before, count after, on which bank, fixed by
   which version; new classes; classes that came back.
 - The coverage map's top cells and what targeted each.
 - One table per cycle, losers included: strategy; card (root cause, cell, route); spike
   TRAIN delta; built (y/n); gates; safety deltas; TRAIN gained and lost; pooled SELECT B
   and C; cluster-aware p; Holm verdict; gain on n of m banks; visibility; targeted bank
-  result; outcome (proven, mechanism, dropped, pruned) with the reason; cost.
+  result; outcome (proven, mechanism, safety-gain, dropped, re-test, pruned) with the
+  reason; cost.
 - Stack table: version, strategy, route, solo and marginal gain (each marked inside or
   outside the noise), CONFIRM result, ablation result.
 - `seal.py statement` pasted.
@@ -245,6 +344,6 @@ each writes `cycles/<n>/<id>.json` in the schema above.
 ## Sequential mode (fallback)
 
 When fewer than 3 strategies apply, candidates cannot be built in parallel, or the profile
-is Lite: one strategy per version in priority order, each kept by the same two routes on
-pooled SELECT, CONFIRM once per cycle, ablation before the last version. Say which and why
+is Lite: one strategy per version in priority order, each kept by the same three routes,
+CONFIRM once per cycle, ablation before the last version. Say which and why
 in FRAME.md.
